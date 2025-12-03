@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  telegramId String? @unique
+  username  String?
+  fullName  String?
+  role      String   @default("user") // user, admin
+  balance   Float    @default(0)  // Поинты (дробные: 0.7, 0.3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  uploadedLeads     Lead[]           @relation("UploadedLeads")
+  purchasedLeads    LeadPurchase[]   // История покупок
+  transactions      Transaction[]
+  uploadBatches     LeadUploadBatch[]
+  
+  @@index([telegramId])
+  @@map("users")
+}
+
+model Lead {
+  id                String   @id @default(cuid())
+  phone             String
+  comment           String?
+  region            String?
+  niche             String?
+  ownerId           String?  // Кто загрузил (получает поинты при покупке)
+  purchaseCount     Int      @default(0)  // Сколько раз купили (max 3)
+  isArchived        Boolean  @default(false)  // После 3-х покупок → архив
+  ownerReward       Float    @default(0)  // Сколько владелец заработал
+  status            String   @default("uploaded") // uploaded, on_moderation, rejected, in_market, archived
+  batchId           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  owner             User?    @relation("UploadedLeads", fields: [ownerId], references: [id])
+  batch             LeadUploadBatch? @relation(fields: [batchId], references: [id])
+  purchases         LeadPurchase[]  // История покупок этого лида
+  transaction       Transaction?
+  
+  @@index([ownerId])
+  @@index([purchaseCount])
+  @@index([isArchived])
+  @@index([status])
+  @@index([niche])
+  @@index([region])
+  @@index([phone])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+// История покупок лида (кто и когда купил)
+model LeadPurchase {
+  id          String   @id @default(cuid())
+  leadId      String
+  buyerId     String
+  price       Float    // Сколько заплатил (1.0, 0.7, 0.3)
+  purchaseNum Int      // Какая по счёту покупка (1, 2, 3)
+  createdAt   DateTime @default(now())
+  
+  lead        Lead     @relation(fields: [leadId], references: [id])
+  buyer       User     @relation(fields: [buyerId], references: [id])
+  
+  @@index([leadId])
+  @@index([buyerId])
+  @@index([createdAt])
+  @@map("lead_purchases")
+}
+
+model LeadUploadBatch {
+  id            String   @id @default(cuid())
+  userId        String
+  niche         String?
+  region        String?
+  rawText       String?
+  totalUploaded Int      @default(0)
+  totalValid    Int      @default(0)
+  pointsCredited Int     @default(0)
+  status        String   @default("pending") // pending, approved, rejected
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  leads         Lead[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("lead_upload_batches")
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float    // Дробные поинты
+  type      String   // deposit, withdraw, purchase, upload_reward, sale_reward
+  description String?
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+  leadId    String?  @unique
+  lead      Lead?    @relation(fields: [leadId], references: [id])
+  
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("transactions")
+}
+

@@ -1,26 +1,81 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --text: #111827;
+    --text-secondary: #6B7280;
+    --accent: #3A78F2;
+    --success: #27C081;
+    --error: #FF6161;
+    --border: #E6E9EE;
+    
+    /* Telegram WebApp theme variables */
+    --tg-theme-bg-color: var(--bg);
+    --tg-theme-text-color: var(--text);
+    --tg-theme-hint-color: var(--text-secondary);
+    --tg-theme-link-color: var(--accent);
+    --tg-theme-button-color: var(--accent);
+    --tg-theme-button-text-color: #FFFFFF;
+    --tg-theme-secondary-bg-color: var(--surface);
+  }
+
+  .dark {
+    --bg: #0F1114;
+    --surface: #14171A;
+    --text: #ECEFF4;
+    --text-secondary: #9AA3AF;
+    --accent: #4C8BFF;
+    --success: #2DE499;
+    --error: #FF7070;
+    --border: #1F2326;
+    
+    /* Telegram WebApp theme variables для темной темы */
+    --tg-theme-bg-color: var(--bg);
+    --tg-theme-text-color: var(--text);
+    --tg-theme-hint-color: var(--text-secondary);
+    --tg-theme-link-color: var(--accent);
+    --tg-theme-button-color: var(--accent);
+    --tg-theme-button-text-color: #FFFFFF;
+    --tg-theme-secondary-bg-color: var(--surface);
+  }
+
+  body {
+    @apply bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Используем цвет фона из Telegram, если доступен */
+    background-color: var(--tg-theme-bg-color, var(--bg));
+    color: var(--tg-theme-text-color, var(--text));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .tap-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .container-mobile {
+    @apply max-w-[430px] mx-auto px-4;
+  }
+  
+  @media (max-width: 360px) {
+    .container-mobile {
+      @apply px-3;
+    }
+  }
 }
