@@ -127,6 +127,16 @@
     padding-bottom: max(env(safe-area-inset-bottom), 20px);
   }
 
+  /* Padding для контента над навбаром (64px navbar + safe area) */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Минимальный отступ для контента выше навбара */
+  .content-safe {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
   /* Touch-friendly buttons */
   .touch-btn {
     @apply min-h-[48px] min-w-[48px] active:scale-95 transition-transform duration-100;

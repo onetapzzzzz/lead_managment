@@ -25,7 +25,7 @@ export default function HomePage() {
   return (
     <motion.div
       {...pageTransition}
-      className="min-h-screen pb-20 pb-safe-bottom"
+      className="min-h-screen pb-24"
     >
       <Header title="Lead Exchange" onProfileClick={() => router.push("/profile")} />
       

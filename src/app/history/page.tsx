@@ -30,10 +30,10 @@ export default function HistoryPage() {
   return (
     <motion.div
       {...pageTransition}
-      className="min-h-screen pb-20 pb-safe-bottom"
+      className="min-h-screen pb-24"
     >
       <Header title="История" onProfileClick={() => router.push("/profile")} />
-      <main className="container-mobile pt-6 pb-6">
+      <main className="container-mobile pt-6 pb-8">
         <motion.div
           variants={staggerContainer}
           initial="initial"

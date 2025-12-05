@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { pageTransition, staggerContainer } from "@/lib/motion";
@@ -11,6 +11,7 @@ import { useMarketLeads, useBuyLead } from "@/hooks/useLeads";
 import { useUser } from "@/hooks/useUser";
 import { useToast } from "@/contexts/ToastContext";
 import { formatPrice } from "@/lib/leadPricing";
+import { CATEGORIES, REGIONS } from "@/lib/categories";
 
 export default function MarketPage() {
   const router = useRouter();
@@ -21,11 +22,36 @@ export default function MarketPage() {
 
   const [buyingLeadId, setBuyingLeadId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "unique">("all");
+  const [subcategoryFilter, setSubcategoryFilter] = useState<string>("");
+  const [regionFilter, setRegionFilter] = useState<string>("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const leads = marketData?.leads || [];
-  const filteredLeads = filter === "unique" 
-    ? leads.filter(l => l.isUnique) 
-    : leads;
+  
+  // Фильтрация лидов
+  const filteredLeads = useMemo(() => {
+    let result = leads;
+    
+    if (filter === "unique") {
+      result = result.filter(l => l.isUnique);
+    }
+    
+    if (subcategoryFilter) {
+      result = result.filter(l => l.niche?.includes(subcategoryFilter));
+    }
+    
+    if (regionFilter) {
+      result = result.filter(l => l.region === regionFilter);
+    }
+    
+    return result;
+  }, [leads, filter, subcategoryFilter, regionFilter]);
+
+  // Уникальные регионы из лидов
+  const availableRegions = useMemo(() => {
+    const regions = new Set(leads.map(l => l.region).filter(Boolean));
+    return Array.from(regions).sort();
+  }, [leads]);
 
   const handleBuyLead = async (leadId: string, price: number) => {
     if ((userData?.balance || 0) < price) {
@@ -56,29 +82,37 @@ export default function MarketPage() {
     return "bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30";
   };
 
+  const clearFilters = () => {
+    setFilter("all");
+    setSubcategoryFilter("");
+    setRegionFilter("");
+  };
+
+  const hasActiveFilters = filter !== "all" || subcategoryFilter || regionFilter;
+
   return (
     <motion.div
       {...pageTransition}
-      className="min-h-screen pb-20 pb-safe-bottom"
+      className="min-h-screen pb-24"
     >
       <Header title="Маркетплейс" onProfileClick={() => router.push("/profile")} />
       
-      <main className="container-mobile pt-6 pb-6">
-        {/* Баланс и фильтры */}
+      <main className="container-mobile pt-6 pb-8">
+        {/* Баланс */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24, ease: "easeOut" }}
-          className="mb-6"
+          className="mb-4"
         >
           <Card className="p-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <div>
                 <div className="text-small text-light-textSecondary dark:text-dark-textSecondary">
                   Ваш баланс
                 </div>
                 <div className="text-h2 font-bold text-light-accent dark:text-dark-accent">
-                  {formatPrice(userData?.balance || 0)} поинтов
+                  {formatPrice(userData?.balance || 0)} п.
                 </div>
               </div>
               <Button
@@ -86,34 +120,127 @@ export default function MarketPage() {
                 className="text-small px-3 py-2"
                 onClick={() => router.push("/upload")}
               >
-                + Загрузить лиды
+                + Загрузить
               </Button>
             </div>
-            
-            {/* Фильтры */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilter("all")}
-                className={`flex-1 py-2 px-4 rounded-button text-small font-medium transition-colors ${
-                  filter === "all"
-                    ? "bg-light-accent dark:bg-dark-accent text-white"
-                    : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
-                }`}
-              >
-                Все ({leads.length})
-              </button>
-              <button
-                onClick={() => setFilter("unique")}
-                className={`flex-1 py-2 px-4 rounded-button text-small font-medium transition-colors ${
-                  filter === "unique"
-                    ? "bg-green-500 text-white"
-                    : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
-                }`}
-              >
-                Уникальные ({leads.filter(l => l.isUnique).length})
-              </button>
-            </div>
           </Card>
+        </motion.div>
+
+        {/* Фильтры */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, delay: 0.05 }}
+          className="mb-4"
+        >
+          {/* Быстрые фильтры */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setFilter("all")}
+              className={`flex-1 py-2.5 px-4 rounded-button text-small font-medium transition-all ${
+                filter === "all"
+                  ? "bg-light-accent dark:bg-dark-accent text-white shadow-sm"
+                  : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
+              }`}
+            >
+              Все ({leads.length})
+            </button>
+            <button
+              onClick={() => setFilter("unique")}
+              className={`flex-1 py-2.5 px-4 rounded-button text-small font-medium transition-all ${
+                filter === "unique"
+                  ? "bg-green-500 text-white shadow-sm"
+                  : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
+              }`}
+            >
+              ✨ Уникальные ({leads.filter(l => l.isUnique).length})
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`py-2.5 px-3 rounded-button text-small font-medium transition-all ${
+                showFilters || hasActiveFilters
+                  ? "bg-light-accent dark:bg-dark-accent text-white"
+                  : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
+              }`}
+            >
+              ⚙️
+            </button>
+          </div>
+
+          {/* Расширенные фильтры */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <Card className="p-4 space-y-3">
+                  {/* Подкатегория */}
+                  <div>
+                    <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
+                      🪟 Подкатегория
+                    </label>
+                    <select
+                      value={subcategoryFilter}
+                      onChange={(e) => setSubcategoryFilter(e.target.value)}
+                      className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                    >
+                      <option value="">Все подкатегории</option>
+                      {CATEGORIES.windows.subcategories.map((sub) => (
+                        <option key={sub.id} value={sub.name}>{sub.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Регион */}
+                  <div>
+                    <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
+                      📍 Регион
+                    </label>
+                    <select
+                      value={regionFilter}
+                      onChange={(e) => setRegionFilter(e.target.value)}
+                      className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                    >
+                      <option value="">Все регионы</option>
+                      {availableRegions.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {hasActiveFilters && (
+                    <Button
+                      variant="secondary"
+                      onClick={clearFilters}
+                      fullWidth
+                      className="text-small"
+                    >
+                      Сбросить фильтры
+                    </Button>
+                  )}
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Активные фильтры */}
+          {hasActiveFilters && !showFilters && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {subcategoryFilter && (
+                <span className="text-small px-2 py-1 rounded-full bg-light-accent/10 dark:bg-dark-accent/10 text-light-accent dark:text-dark-accent">
+                  🪟 {subcategoryFilter.length > 20 ? subcategoryFilter.substring(0, 20) + "..." : subcategoryFilter}
+                </span>
+              )}
+              {regionFilter && (
+                <span className="text-small px-2 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                  📍 {regionFilter}
+                </span>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Информация о ценах */}
@@ -121,28 +248,32 @@ export default function MarketPage() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24, delay: 0.1, ease: "easeOut" }}
-          className="mb-6"
+          className="mb-4"
         >
-          <Card className="p-4 bg-gradient-to-r from-light-accent/10 to-transparent dark:from-dark-accent/10">
-            <div className="text-small font-medium text-light-text dark:text-dark-text mb-2">
-              💡 Как работает ценообразование
-            </div>
-            <div className="text-small text-light-textSecondary dark:text-dark-textSecondary space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-green-500" />
-                <span>Уникальный (0 из 3) — <b>1 поинт</b></span>
+          <Card className="p-3 bg-gradient-to-r from-light-accent/5 to-transparent dark:from-dark-accent/10">
+            <div className="flex items-center gap-4 text-small">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                <span className="text-light-textSecondary dark:text-dark-textSecondary">1п.</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span>1 из 3 — <b>0.7 поинта</b></span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                <span className="text-light-textSecondary dark:text-dark-textSecondary">0.7п.</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-orange-500" />
-                <span>2 из 3 — <b>0.3 поинта</b></span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                <span className="text-light-textSecondary dark:text-dark-textSecondary">0.3п.</span>
               </div>
             </div>
           </Card>
         </motion.div>
+
+        {/* Результаты фильтрации */}
+        {hasActiveFilters && (
+          <div className="mb-3 text-small text-light-textSecondary dark:text-dark-textSecondary">
+            Найдено: {filteredLeads.length} из {leads.length}
+          </div>
+        )}
 
         {/* Список лидов */}
         <motion.div
@@ -159,17 +290,21 @@ export default function MarketPage() {
             </Card>
           ) : filteredLeads.length === 0 ? (
             <Card className="p-8 text-center">
+              <div className="text-3xl mb-3">📭</div>
               <div className="text-body text-light-textSecondary dark:text-dark-textSecondary mb-4">
-                {filter === "unique" 
-                  ? "Нет уникальных лидов"
+                {hasActiveFilters 
+                  ? "Нет лидов по выбранным фильтрам"
                   : "Нет доступных лидов"}
               </div>
-              <Button
-                variant="primary"
-                onClick={() => router.push("/upload")}
-              >
-                Загрузить лиды
-              </Button>
+              {hasActiveFilters ? (
+                <Button variant="secondary" onClick={clearFilters}>
+                  Сбросить фильтры
+                </Button>
+              ) : (
+                <Button variant="primary" onClick={() => router.push("/upload")}>
+                  Загрузить лиды
+                </Button>
+              )}
             </Card>
           ) : (
             <AnimatePresence mode="popLayout">
@@ -182,10 +317,10 @@ export default function MarketPage() {
                     animate: { opacity: 1, y: 0 },
                   }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.24, ease: "easeOut", delay: index * 0.04 }}
+                  transition={{ duration: 0.24, ease: "easeOut", delay: index * 0.03 }}
                 >
                   <Card className="p-4">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         {/* Телефон */}
                         <div className="text-body font-mono font-semibold text-light-text dark:text-dark-text mb-1">
@@ -200,15 +335,15 @@ export default function MarketPage() {
                         )}
 
                         {/* Регион и ниша */}
-                        <div className="flex flex-wrap gap-2 mb-2">
+                        <div className="flex flex-wrap gap-1.5 mb-2">
                           {lead.region && (
-                            <span className="text-small px-2 py-0.5 rounded bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary">
+                            <span className="text-small px-2 py-0.5 rounded bg-light-bg dark:bg-dark-bg text-light-textSecondary dark:text-dark-textSecondary">
                               📍 {lead.region}
                             </span>
                           )}
                           {lead.niche && (
-                            <span className="text-small px-2 py-0.5 rounded bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary">
-                              🏷️ {lead.niche}
+                            <span className="text-small px-2 py-0.5 rounded bg-light-bg dark:bg-dark-bg text-light-textSecondary dark:text-dark-textSecondary">
+                              🪟 {lead.niche.replace("Окна: ", "")}
                             </span>
                           )}
                         </div>
@@ -262,20 +397,7 @@ export default function MarketPage() {
             </AnimatePresence>
           )}
         </motion.div>
-
-        {/* Подсказка о заработке */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 text-center"
-        >
-          <p className="text-small text-light-textSecondary dark:text-dark-textSecondary">
-            Загружай свои лиды и получай до <b>2 поинтов</b> за каждый!
-          </p>
-        </motion.div>
       </main>
     </motion.div>
   );
 }
-

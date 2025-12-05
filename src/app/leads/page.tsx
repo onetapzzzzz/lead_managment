@@ -36,10 +36,10 @@ export default function LeadsPage() {
   return (
     <motion.div
       {...pageTransition}
-      className="min-h-screen pb-20 pb-safe-bottom"
+      className="min-h-screen pb-24"
     >
       <Header title="Мои лиды" onProfileClick={() => router.push("/profile")} />
-      <main className="container-mobile pt-6 pb-6">
+      <main className="container-mobile pt-6 pb-8">
         {/* Табы */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}

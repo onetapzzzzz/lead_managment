@@ -1,41 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { pageTransition } from "@/lib/motion";
 import { Header } from "@/components/Header";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { Modal } from "@/components/Modal";
 import { parsePhonesFromText } from "@/lib/phoneParser";
 import { useToast } from "@/contexts/ToastContext";
 import { useUploadBatch } from "@/hooks/useUploadBatch";
 import { useUser } from "@/hooks/useUser";
-
-const niches = [
-  "Недвижимость",
-  "Авто",
-  "Услуги",
-  "Товары",
-  "Другое",
-];
-
-const regions = [
-  "Москва",
-  "Санкт-Петербург",
-  "Казань",
-  "Екатеринбург",
-  "Новосибирск",
-  "Другой",
-];
+import { CATEGORIES, REGIONS } from "@/lib/categories";
 
 export default function UploadPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [step, setStep] = useState<"niche" | "region" | "text" | "result">("niche");
-  const [niche, setNiche] = useState("");
+  const [step, setStep] = useState<"category" | "region" | "text" | "result">("category");
+  const [subcategory, setSubcategory] = useState("");
   const [region, setRegion] = useState("");
+  const [regionSearch, setRegionSearch] = useState("");
   const [description, setDescription] = useState("");
   const [rawText, setRawText] = useState("");
   const uploadBatchMutation = useUploadBatch();
@@ -49,6 +33,13 @@ export default function UploadPage() {
 
   const parsedPhones = rawText ? parsePhonesFromText(rawText) : [];
   const validCount = parsedPhones.length;
+
+  // Фильтрация регионов
+  const filteredRegions = useMemo(() => {
+    if (!regionSearch.trim()) return REGIONS;
+    const search = regionSearch.toLowerCase();
+    return REGIONS.filter(r => r.toLowerCase().includes(search));
+  }, [regionSearch]);
 
   const handleSubmit = async () => {
     if (!rawText.trim()) {
@@ -64,7 +55,7 @@ export default function UploadPage() {
     try {
       const data = await uploadBatchMutation.mutateAsync({
         rawText,
-        niche: niche || undefined,
+        niche: subcategory ? `Окна: ${subcategory}` : "Окна",
         region: region || undefined,
         description: description.trim() || undefined,
       });
@@ -84,44 +75,66 @@ export default function UploadPage() {
   };
 
   const handleReset = () => {
-    setStep("niche");
-    setNiche("");
+    setStep("category");
+    setSubcategory("");
     setRegion("");
+    setRegionSearch("");
     setDescription("");
     setRawText("");
     setResult(null);
   };
 
+  const windowsCategory = CATEGORIES.windows;
+
   return (
     <motion.div
       {...pageTransition}
-      className="min-h-screen pb-20 pb-safe-bottom"
+      className="min-h-screen pb-24"
     >
       <Header title="Загрузка лидов" onProfileClick={() => router.push("/profile")} />
-      <main className="container-mobile pt-6 pb-6">
-        {step === "niche" && (
+      <main className="container-mobile pt-6 pb-8">
+        {step === "category" && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.24 }}
             className="space-y-4"
           >
-            <h2 className="text-h2 font-semibold text-light-text dark:text-dark-text mb-4">
-              Выберите нишу
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              {niches.map((n) => (
-                <Button
-                  key={n}
-                  variant={niche === n ? "primary" : "secondary"}
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-3xl">{windowsCategory.icon}</span>
+              <div>
+                <h2 className="text-h2 font-semibold text-light-text dark:text-dark-text">
+                  {windowsCategory.name}
+                </h2>
+                <p className="text-small text-light-textSecondary dark:text-dark-textSecondary">
+                  Выберите подкатегорию
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {windowsCategory.subcategories.map((sub) => (
+                <Card
+                  key={sub.id}
+                  className={`p-4 cursor-pointer transition-all ${
+                    subcategory === sub.name 
+                      ? "ring-2 ring-light-accent dark:ring-dark-accent bg-light-accent/5 dark:bg-dark-accent/5" 
+                      : "hover:bg-light-surface/80 dark:hover:bg-dark-surface/80"
+                  }`}
                   onClick={() => {
-                    setNiche(n);
+                    setSubcategory(sub.name);
                     setStep("region");
                   }}
-                  className="h-14"
                 >
-                  {n}
-                </Button>
+                  <div className="flex items-center justify-between">
+                    <span className="text-body text-light-text dark:text-dark-text">
+                      {sub.name}
+                    </span>
+                    <svg className="w-5 h-5 text-light-textSecondary dark:text-dark-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Card>
               ))}
             </div>
           </motion.div>
@@ -134,32 +147,66 @@ export default function UploadPage() {
             transition={{ duration: 0.24 }}
             className="space-y-4"
           >
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-2">
               <button
-                onClick={() => setStep("niche")}
-                className="tap-target text-light-accent dark:text-dark-accent"
+                onClick={() => setStep("category")}
+                className="tap-target text-light-accent dark:text-dark-accent font-medium"
               >
                 ← Назад
               </button>
-              <h2 className="text-h2 font-semibold text-light-text dark:text-dark-text">
-                Выберите регион
-              </h2>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {regions.map((r) => (
-                <Button
-                  key={r}
-                  variant={region === r ? "primary" : "secondary"}
-                  onClick={() => {
-                    setRegion(r);
-                    setStep("text");
-                  }}
-                  className="h-14"
-                >
-                  {r}
-                </Button>
-              ))}
+            
+            <h2 className="text-h2 font-semibold text-light-text dark:text-dark-text">
+              Выберите регион
+            </h2>
+            
+            {/* Поиск региона */}
+            <div className="relative">
+              <input
+                type="text"
+                value={regionSearch}
+                onChange={(e) => setRegionSearch(e.target.value)}
+                placeholder="🔍 Поиск региона..."
+                className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text px-4 py-3 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors"
+              />
             </div>
+
+            {/* Список регионов */}
+            <div className="max-h-[50vh] overflow-y-auto space-y-1 rounded-card border border-light-border dark:border-dark-border p-2 no-scrollbar">
+              {filteredRegions.length === 0 ? (
+                <div className="p-4 text-center text-light-textSecondary dark:text-dark-textSecondary">
+                  Регион не найден
+                </div>
+              ) : (
+                filteredRegions.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setRegion(r);
+                      setStep("text");
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-button transition-colors ${
+                      region === r
+                        ? "bg-light-accent dark:bg-dark-accent text-white"
+                        : "hover:bg-light-surface dark:hover:bg-dark-surface text-light-text dark:text-dark-text"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))
+              )}
+            </div>
+
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setRegion("");
+                setStep("text");
+              }}
+              fullWidth
+            >
+              Пропустить выбор региона
+            </Button>
           </motion.div>
         )}
 
@@ -170,32 +217,40 @@ export default function UploadPage() {
             transition={{ duration: 0.24 }}
             className="space-y-4"
           >
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-2">
               <button
                 onClick={() => setStep("region")}
-                className="tap-target text-light-accent dark:text-dark-accent"
+                className="tap-target text-light-accent dark:text-dark-accent font-medium"
               >
                 ← Назад
               </button>
-              <h2 className="text-h2 font-semibold text-light-text dark:text-dark-text">
-                Данные лидов
-              </h2>
             </div>
+            
+            {/* Выбранные параметры */}
+            <Card className="p-3">
+              <div className="flex flex-wrap gap-2">
+                <span className="text-small px-3 py-1 rounded-full bg-light-accent/10 dark:bg-dark-accent/10 text-light-accent dark:text-dark-accent font-medium">
+                  🪟 {subcategory || "Окна"}
+                </span>
+                {region && (
+                  <span className="text-small px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 font-medium">
+                    📍 {region}
+                  </span>
+                )}
+              </div>
+            </Card>
             
             {/* Описание */}
             <Card className="p-4">
               <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                📝 Описание (необязательно)
+                📝 Комментарий (необязательно)
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Например: горячие лиды с выставки, интересуются ремонтом..."
-                className="w-full min-h-[80px] rounded-button border-2 border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text px-4 py-3 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
+                placeholder="Например: горячие лиды с выставки, интересуются остеклением..."
+                className="w-full min-h-[80px] rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
               />
-              <div className="mt-2 text-small text-light-textSecondary dark:text-dark-textSecondary">
-                Описание поможет покупателям понять ценность лидов
-              </div>
             </Card>
 
             {/* Телефоны */}
@@ -206,8 +261,8 @@ export default function UploadPage() {
               <textarea
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
-                placeholder="+7 999 123-45-67&#10;8 (912) 345-67-89&#10;или любой текст с номерами..."
-                className="w-full min-h-[150px] rounded-button border-2 border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text px-4 py-3 text-body font-mono focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
+                placeholder={"+7 999 123-45-67\n8 (912) 345-67-89\nили любой текст с номерами..."}
+                className="w-full min-h-[150px] rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-body font-mono focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
                 autoFocus
               />
               {rawText ? (
@@ -287,4 +342,3 @@ export default function UploadPage() {
     </motion.div>
   );
 }
-
