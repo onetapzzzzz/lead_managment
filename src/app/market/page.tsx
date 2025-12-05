@@ -49,7 +49,7 @@ export default function MarketPage() {
 
   // Уникальные регионы из лидов
   const availableRegions = useMemo(() => {
-    const regions = new Set(leads.map(l => l.region).filter(Boolean));
+    const regions = new Set(leads.map(l => l.region).filter((r): r is string => Boolean(r)));
     return Array.from(regions).sort();
   }, [leads]);
 
