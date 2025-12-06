@@ -250,6 +250,7 @@ export const leadsApi = {
         purchaseCount: number;
         isArchived: boolean;
         createdAt: string;
+        sellerId: string | null;
       };
       price: number;
       balance: number;
