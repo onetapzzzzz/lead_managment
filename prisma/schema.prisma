@@ -37,7 +37,8 @@ model User {
 model Lead {
   id                String   @id @default(cuid())
   phone             String
-  comment           String?
+  name              String?  // Имя клиента
+  comment           String?  // Комментарий (обязателен при загрузке - валидация в API)
   region            String?
   city              String?
   niche             String?
@@ -53,7 +54,7 @@ model Lead {
   owner             User?    @relation("UploadedLeads", fields: [ownerId], references: [id])
   batch             LeadUploadBatch? @relation(fields: [batchId], references: [id])
   purchases         LeadPurchase[]  // История покупок этого лида
-  transaction       Transaction?
+  transactions      Transaction[]   // Транзакции связанные с этим лидом
   
   @@index([ownerId])
   @@index([purchaseCount])
@@ -115,11 +116,12 @@ model Transaction {
   createdAt DateTime @default(now())
   
   user      User     @relation(fields: [userId], references: [id])
-  leadId    String?  @unique
+  leadId    String?  // Убрали @unique - лид может быть куплен несколько раз
   lead      Lead?    @relation(fields: [leadId], references: [id])
   
   @@index([userId])
   @@index([type])
+  @@index([leadId])
   @@index([createdAt])
   @@map("transactions")
 }

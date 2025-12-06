@@ -7,38 +7,38 @@ import { pageTransition } from "@/lib/motion";
 import { Header } from "@/components/Header";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { parsePhonesFromText } from "@/lib/phoneParser";
 import { useToast } from "@/contexts/ToastContext";
-import { useUploadBatch } from "@/hooks/useUploadBatch";
 import { useUser } from "@/hooks/useUser";
 import { useTelegramUser } from "@/hooks/useTelegramUser";
 import { CATEGORIES, REGIONS } from "@/lib/categories";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function UploadPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const { userId: tgUserId, username: tgUsername, fullName: tgFullName } = useTelegramUser();
-  const [step, setStep] = useState<"category" | "region" | "text" | "result">("category");
+  
+  const [step, setStep] = useState<"category" | "region" | "form" | "result">("category");
   const [subcategory, setSubcategory] = useState("");
   const [region, setRegion] = useState("");
   const [regionSearch, setRegionSearch] = useState("");
-  const [description, setDescription] = useState("");
-  const [rawText, setRawText] = useState("");
-  const uploadBatchMutation = useUploadBatch();
+  
+  // Поля лида
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [comment, setComment] = useState("");
+  
+  const [result, setResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
   const { data: user } = useUser({ 
     userId: tgUserId || undefined,
     username: tgUsername || undefined,
     fullName: tgFullName || undefined
   });
-  const [result, setResult] = useState<{
-    totalUploaded: number;
-    totalValid: number;
-    duplicatesRejected: number;
-    message: string;
-  } | null>(null);
-
-  const parsedPhones = rawText ? parsePhonesFromText(rawText) : [];
-  const validCount = parsedPhones.length;
 
   // Фильтрация регионов
   const filteredRegions = useMemo(() => {
@@ -47,37 +47,81 @@ export default function UploadPage() {
     return REGIONS.filter(r => r.toLowerCase().includes(search));
   }, [regionSearch]);
 
-  const handleSubmit = async () => {
-    if (!rawText.trim()) {
-      showToast("Введите текст с телефонами", "error");
-      return;
+  // Валидация телефона
+  const normalizePhone = (input: string): string | null => {
+    const digits = input.replace(/\D/g, "");
+    if (digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"))) {
+      return `+7${digits.slice(1)}`;
     }
+    if (digits.length === 10) {
+      return `+7${digits}`;
+    }
+    return null;
+  };
 
-    if (validCount === 0) {
-      showToast("Телефоны не найдены в тексте", "error");
+  const normalizedPhone = normalizePhone(phone);
+  const isPhoneValid = !!normalizedPhone;
+  const isFormValid = isPhoneValid && name.trim().length >= 2 && comment.trim().length >= 10;
+
+  // Мутация для загрузки одного лида
+  const uploadMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/leads/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: normalizedPhone,
+          name: name.trim(),
+          comment: comment.trim(),
+          region: region || undefined,
+          niche: subcategory ? `Окна: ${subcategory}` : "Окна",
+          userId: tgUserId,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Ошибка загрузки");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+  });
+
+  const handleSubmit = async () => {
+    if (!isFormValid) {
+      if (!isPhoneValid) {
+        showToast("Введите корректный номер телефона", "error");
+      } else if (name.trim().length < 2) {
+        showToast("Укажите имя клиента (минимум 2 символа)", "error");
+      } else if (comment.trim().length < 10) {
+        showToast("Добавьте комментарий (минимум 10 символов)", "error");
+      }
       return;
     }
 
     try {
-      const data = await uploadBatchMutation.mutateAsync({
-        rawText,
-        niche: subcategory || "Общая категория",
-        region: region || undefined,
-        description: description.trim() || undefined,
-        userId: tgUserId || undefined,
-      });
-
+      await uploadMutation.mutateAsync();
       setResult({
-        totalUploaded: data.batch.totalUploaded,
-        totalValid: data.batch.totalValid,
-        duplicatesRejected: data.batch.duplicatesRejected,
-        message: data.message,
+        success: true,
+        message: "Лид успешно загружен!",
       });
       setStep("result");
-      showToast(data.message || `Загружено ${data.batch.totalValid} лидов`, "success");
+      showToast("Лид добавлен на маркетплейс", "success");
     } catch (error: any) {
       const message = error?.message || "Ошибка загрузки";
-      showToast(message.length > 50 ? message.substring(0, 47) + "..." : message, "error");
+      showToast(message, "error");
+      if (message.includes("уже существует") || message.includes("дубликат")) {
+        setResult({
+          success: false,
+          message: "Этот номер уже есть в базе",
+        });
+        setStep("result");
+      }
     }
   };
 
@@ -86,8 +130,9 @@ export default function UploadPage() {
     setSubcategory("");
     setRegion("");
     setRegionSearch("");
-    setDescription("");
-    setRawText("");
+    setPhone("");
+    setName("");
+    setComment("");
     setResult(null);
   };
 
@@ -98,7 +143,7 @@ export default function UploadPage() {
       {...pageTransition}
       className="min-h-screen pb-24"
     >
-      <Header title="Загрузка лидов" onProfileClick={() => router.push("/profile")} />
+      <Header title="Загрузка лида" onProfileClick={() => router.push("/profile")} />
       <main className="container-mobile pt-6 pb-8">
         {step === "category" && (
           <motion.div
@@ -112,7 +157,7 @@ export default function UploadPage() {
                 Выберите подкатегорию
               </h2>
               <p className="text-sm text-light-textSecondary dark:text-dark-textSecondary mt-1">
-                Укажите тип лидов для загрузки
+                Укажите тип лида
               </p>
             </div>
             
@@ -187,7 +232,7 @@ export default function UploadPage() {
                     key={r}
                     onClick={() => {
                       setRegion(r);
-                      setStep("text");
+                      setStep("form");
                     }}
                     className={`w-full text-left px-4 py-3 rounded-xl transition-colors text-sm ${
                       region === r
@@ -205,7 +250,7 @@ export default function UploadPage() {
               variant="secondary"
               onClick={() => {
                 setRegion("");
-                setStep("text");
+                setStep("form");
               }}
               fullWidth
               className="py-3"
@@ -215,7 +260,7 @@ export default function UploadPage() {
           </motion.div>
         )}
 
-        {step === "text" && (
+        {step === "form" && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -245,52 +290,83 @@ export default function UploadPage() {
               </div>
             </Card>
             
-            {/* Описание */}
-            <Card className="p-4">
-              <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
-                Комментарий (необязательно)
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Например: горячие лиды с выставки..."
-                className="w-full min-h-[80px] rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
-              />
+            {/* Форма лида */}
+            <Card className="p-4 space-y-4">
+              {/* Телефон */}
+              <div>
+                <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                  Телефон <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+7 999 123-45-67"
+                  className={`w-full rounded-xl border-2 ${
+                    phone && !isPhoneValid 
+                      ? "border-red-500" 
+                      : "border-light-border dark:border-dark-border"
+                  } bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors`}
+                />
+                {phone && !isPhoneValid && (
+                  <p className="text-xs text-red-500 mt-1">Введите корректный номер</p>
+                )}
+                {isPhoneValid && (
+                  <p className="text-xs text-green-500 mt-1">✓ {normalizedPhone}</p>
+                )}
+              </div>
+
+              {/* Имя */}
+              <div>
+                <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                  Имя клиента <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Михаил"
+                  className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors"
+                />
+              </div>
+
+              {/* Комментарий */}
+              <div>
+                <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                  Комментарий <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={"Москва, м. Румянцево\nОстекление лоджии\nХочет просчет стоимости"}
+                  className="w-full min-h-[120px] rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
+                />
+                <p className="text-xs text-light-textSecondary dark:text-dark-textSecondary mt-1">
+                  Укажите адрес, потребность, детали заявки
+                </p>
+              </div>
             </Card>
 
-            {/* Телефоны */}
-            <Card className="p-4">
-              <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
-                Телефоны <span className="text-light-error dark:text-dark-error">*</span>
-              </label>
-              <textarea
-                value={rawText}
-                onChange={(e) => setRawText(e.target.value)}
-                placeholder={"+7 999 123-45-67\n8 (912) 345-67-89\nили любой текст с номерами..."}
-                className="w-full min-h-[150px] rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-sm font-mono focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
-                autoFocus
-              />
-              {rawText ? (
-                <div className="mt-3 flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${validCount > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span className="text-sm text-light-textSecondary dark:text-dark-textSecondary">
-                    Найдено телефонов: <span className={`font-semibold ${validCount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>{validCount}</span>
-                  </span>
-                </div>
-              ) : (
-                <div className="mt-2 text-xs text-light-textSecondary dark:text-dark-textSecondary">
-                  Вставьте номера в любом формате
-                </div>
-              )}
+            {/* Пример */}
+            <Card className="p-4 bg-light-accent/5 dark:bg-dark-accent/5">
+              <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary mb-2">
+                💡 Пример хорошего комментария:
+              </div>
+              <div className="text-sm text-light-text dark:text-dark-text whitespace-pre-line">
+{`1. Михаил
+2. Москва, м. Румянцево
+3. Остекление лоджии
+4. Хочет просчёт стоимости`}
+              </div>
             </Card>
 
             <Button
               onClick={handleSubmit}
-              disabled={uploadBatchMutation.isPending || validCount === 0}
+              disabled={uploadMutation.isPending || !isFormValid}
               fullWidth
               className="py-4 text-base"
             >
-              {uploadBatchMutation.isPending ? "Загрузка..." : `Загрузить ${validCount > 0 ? validCount + ' лидов' : ''}`}
+              {uploadMutation.isPending ? "Загрузка..." : "Загрузить лид"}
             </Button>
           </motion.div>
         )}
@@ -303,25 +379,18 @@ export default function UploadPage() {
             className="space-y-4"
           >
             <Card className="p-6 text-center">
-              <div className="text-4xl mb-4">{result.totalValid > 0 ? "✅" : "⚠️"}</div>
+              <div className="text-4xl mb-4">{result.success ? "✅" : "⚠️"}</div>
               <h2 className="text-xl font-bold text-light-text dark:text-dark-text mb-2">
-                {result.totalValid > 0 ? "Загрузка завершена!" : "Лиды не добавлены"}
+                {result.message}
               </h2>
-              <div className="space-y-2 text-sm text-light-textSecondary dark:text-dark-textSecondary">
-                <div>Найдено номеров: <span className="font-semibold text-light-text dark:text-dark-text">{result.totalUploaded}</span></div>
-                <div>Добавлено новых: <span className="font-semibold text-light-success dark:text-dark-success">{result.totalValid}</span></div>
-                {result.duplicatesRejected > 0 && (
-                  <div>Дубликатов: <span className="font-semibold text-orange-500">{result.duplicatesRejected}</span></div>
-                )}
-              </div>
               
-              {result.totalValid > 0 && (
+              {result.success && (
                 <div className="mt-4 p-3 rounded-xl bg-light-accent/10 dark:bg-dark-accent/10">
                   <div className="text-sm text-light-accent dark:text-dark-accent font-medium">
                     Lead Coin начислятся при продаже!
                   </div>
                   <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary mt-1">
-                    До <b>2 LC</b> за каждый лид (1 + 0.7 + 0.3)
+                    До <b>3.5 LC</b> за лид (2 + 1 + 0.5)
                   </div>
                 </div>
               )}

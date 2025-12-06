@@ -23,16 +23,45 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
+    const ownerId = searchParams.get("ownerId");
 
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
+    const whereConditions: any[] = [];
+    
+    if (status) whereConditions.push({ status });
+    
     if (search) {
-      where.OR = [
-        { phone: { contains: search } },
-        { region: { contains: search } },
-        { niche: { contains: search } },
-      ];
+      whereConditions.push({
+        OR: [
+          { phone: { contains: search } },
+          { region: { contains: search, mode: "insensitive" } },
+          { niche: { contains: search, mode: "insensitive" } },
+          { comment: { contains: search, mode: "insensitive" } },
+        ],
+      });
     }
+
+    // Фильтр по дате
+    if (dateFrom || dateTo) {
+      const dateFilter: any = {};
+      if (dateFrom) dateFilter.gte = new Date(dateFrom);
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        dateFilter.lte = endDate;
+      }
+      whereConditions.push({ createdAt: dateFilter });
+    }
+
+    // Фильтр по владельцу (telegramId)
+    if (ownerId) {
+      whereConditions.push({
+        owner: { telegramId: ownerId },
+      });
+    }
+
+    const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
 
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({

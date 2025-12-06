@@ -47,10 +47,15 @@ export default function AdminLeadsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  
+  // Новые фильтры
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [ownerId, setOwnerId] = useState("");
 
   useEffect(() => {
     fetchLeads();
-  }, [page, search, status]);
+  }, [page, search, status, dateFrom, dateTo, ownerId]);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -61,6 +66,10 @@ export default function AdminLeadsPage() {
         search,
         status,
       });
+      if (dateFrom) params.append("dateFrom", dateFrom);
+      if (dateTo) params.append("dateTo", dateTo);
+      if (ownerId) params.append("ownerId", ownerId);
+      
       const res = await fetch(`/api/admin/leads?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -115,32 +124,88 @@ export default function AdminLeadsPage() {
       </div>
 
       {/* Фильтры */}
-      <div className="bg-slate-800 rounded-xl p-4 flex flex-wrap gap-4">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          placeholder="Поиск по телефону, региону, нише..."
-          className="flex-1 min-w-[200px] px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <select
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
-          className="px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Все статусы</option>
-          <option value="uploaded">Загружено</option>
-          <option value="on_moderation">На модерации</option>
-          <option value="in_market">На маркете</option>
-          <option value="archived">В архиве</option>
-          <option value="rejected">Отклонено</option>
-        </select>
+      <div className="bg-slate-800 rounded-xl p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Поиск по телефону, региону, нише..."
+            className="md:col-span-2 px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+            className="px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Все статусы</option>
+            <option value="uploaded">Загружено</option>
+            <option value="on_moderation">На модерации</option>
+            <option value="in_market">На маркете</option>
+            <option value="archived">В архиве</option>
+            <option value="rejected">Отклонено</option>
+          </select>
+          <input
+            type="text"
+            value={ownerId}
+            onChange={(e) => {
+              setOwnerId(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Telegram ID владельца"
+            className="px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Дата от</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Дата до</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="md:col-span-2 flex items-end">
+            {(search || status || dateFrom || dateTo || ownerId) && (
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setStatus("");
+                  setDateFrom("");
+                  setDateTo("");
+                  setOwnerId("");
+                  setPage(1);
+                }}
+                className="text-sm text-blue-400 hover:text-blue-300"
+              >
+                Сбросить все фильтры
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Таблица */}

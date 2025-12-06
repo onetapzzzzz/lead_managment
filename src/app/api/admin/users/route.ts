@@ -22,23 +22,51 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
 
-    const where = search
-      ? {
-          OR: [
-            { username: { contains: search } },
-            { fullName: { contains: search } },
-            { telegramId: { contains: search } },
-          ],
-        }
-      : {};
+    // Строим условие where
+    const whereConditions: any[] = [];
+    
+    if (search) {
+      whereConditions.push({
+        OR: [
+          { username: { contains: search, mode: "insensitive" } },
+          { fullName: { contains: search, mode: "insensitive" } },
+          { telegramId: { contains: search } },
+        ],
+      });
+    }
+
+    // Фильтр по дате регистрации
+    if (dateFrom || dateTo) {
+      const dateFilter: any = {};
+      if (dateFrom) dateFilter.gte = new Date(dateFrom);
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        dateFilter.lte = endDate;
+      }
+      whereConditions.push({ createdAt: dateFilter });
+    }
+
+    const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+    // Определяем сортировку
+    let orderBy: any = { [sortBy]: sortOrder };
+    
+    // Для LTV нужна отдельная логика (сортируем в памяти)
+    const sortInMemory = ["ltv", "totalSpent", "totalEarned"].includes(sortBy);
+    if (sortInMemory) {
+      orderBy = { createdAt: "desc" };
+    }
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        skip: sortInMemory ? 0 : (page - 1) * limit,
+        take: sortInMemory ? undefined : limit,
+        orderBy,
         include: {
           _count: {
             select: {
@@ -47,18 +75,64 @@ export async function GET(request: NextRequest) {
               transactions: true,
             },
           },
+          transactions: {
+            select: {
+              amount: true,
+              type: true,
+            },
+          },
         },
       }),
       prisma.user.count({ where }),
     ]);
 
-    return NextResponse.json({
-      users: users.map((u) => ({
-        ...u,
+    // Обрабатываем данные и вычисляем LTV
+    let processedUsers = users.map((u) => {
+      // Считаем потраченное (покупки) и заработанное (продажи)
+      const totalSpent = u.transactions
+        .filter(t => t.type === "purchase")
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+      const totalEarned = u.transactions
+        .filter(t => t.type === "sale_reward")
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const ltv = totalSpent + totalEarned;
+
+      return {
+        id: u.id,
+        telegramId: u.telegramId,
+        username: u.username,
+        fullName: u.fullName,
+        role: u.role,
+        balance: u.balance,
+        rating: (u as any).rating || 5.0,
+        totalSales: (u as any).totalSales || 0,
+        createdAt: u.createdAt.toISOString(),
         uploadsCount: u._count.uploadedLeads,
         purchasesCount: u._count.purchasedLeads,
         transactionsCount: u._count.transactions,
-      })),
+        totalSpent,
+        totalEarned,
+        ltv,
+      };
+    });
+
+    // Сортировка в памяти для LTV полей
+    if (sortInMemory) {
+      processedUsers.sort((a, b) => {
+        const aVal = (a as any)[sortBy] || 0;
+        const bVal = (b as any)[sortBy] || 0;
+        return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      });
+      
+      // Применяем пагинацию после сортировки
+      const start = (page - 1) * limit;
+      processedUsers = processedUsers.slice(start, start + limit);
+    }
+
+    return NextResponse.json({
+      users: processedUsers,
       total,
       pages: Math.ceil(total / limit),
       page,
@@ -80,6 +154,15 @@ export async function PATCH(request: NextRequest) {
   try {
     const { userId, balance, role } = await request.json();
 
+    // Получаем текущего пользователя
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
+    }
+
     const updateData: Record<string, unknown> = {};
     if (balance !== undefined) updateData.balance = parseFloat(balance);
     if (role !== undefined) updateData.role = role;
@@ -91,14 +174,17 @@ export async function PATCH(request: NextRequest) {
 
     // Логируем изменение баланса
     if (balance !== undefined) {
-      await prisma.transaction.create({
-        data: {
-          userId,
-          amount: parseFloat(balance) - (user.balance || 0),
-          type: "admin_adjustment",
-          description: "Корректировка баланса администратором",
-        },
-      });
+      const diff = parseFloat(balance) - currentUser.balance;
+      if (diff !== 0) {
+        await prisma.transaction.create({
+          data: {
+            userId,
+            amount: diff,
+            type: "admin_adjustment",
+            description: `Корректировка баланса администратором (${diff > 0 ? '+' : ''}${diff.toFixed(1)} LC)`,
+          },
+        });
+      }
     }
 
     return NextResponse.json({ success: true, user });
@@ -110,4 +196,3 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
-

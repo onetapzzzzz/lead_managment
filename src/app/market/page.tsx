@@ -21,6 +21,7 @@ import {
   UNIQUENESS_OPTIONS,
   CONDITION_OPTIONS
 } from "@/lib/categories";
+import { RateSellerModal } from "@/components/RateSellerModal";
 
 interface MarketLead {
   id: string;
@@ -61,6 +62,14 @@ export default function MarketPage() {
 
   const [buyingLeadId, setBuyingLeadId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Состояние для модала оценки продавца
+  const [rateModal, setRateModal] = useState<{
+    isOpen: boolean;
+    sellerId: string;
+    leadId: string;
+    sellerName?: string;
+  }>({ isOpen: false, sellerId: "", leadId: "" });
   
   // Фильтры
   const [subcategoryFilter, setSubcategoryFilter] = useState<string>("");
@@ -189,6 +198,16 @@ export default function MarketPage() {
       showToast(`Лид куплен за ${result.price} LC`, "success");
       refetchUser();
       refetchMarket();
+      
+      // Открываем модал оценки продавца
+      if (result.lead?.sellerId) {
+        setRateModal({
+          isOpen: true,
+          sellerId: result.lead.sellerId,
+          leadId: result.lead.id,
+          sellerName: undefined, // TODO: получить имя продавца
+        });
+      }
     } catch (error: any) {
       showToast(error.message || "Ошибка покупки", "error");
     } finally {
@@ -679,6 +698,16 @@ export default function MarketPage() {
           )}
         </motion.div>
       </main>
+      
+      {/* Модал оценки продавца */}
+      <RateSellerModal
+        isOpen={rateModal.isOpen}
+        onClose={() => setRateModal({ isOpen: false, sellerId: "", leadId: "" })}
+        sellerId={rateModal.sellerId}
+        leadId={rateModal.leadId}
+        buyerId={tgUserId || ""}
+        sellerName={rateModal.sellerName}
+      />
     </motion.div>
   );
 }
