@@ -6,9 +6,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { pageTransition, staggerContainer } from "@/lib/motion";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { useMarketLeads, useBuyLead } from "@/hooks/useLeads";
+import { useBuyLead } from "@/hooks/useLeads";
 import { useUser } from "@/hooks/useUser";
+import { useTelegramUser } from "@/hooks/useTelegramUser";
 import { useToast } from "@/contexts/ToastContext";
+import { useQuery } from "@tanstack/react-query";
+import { leadsApi } from "@/lib/api";
 import { formatPrice } from "@/lib/leadPricing";
 import { 
   CATEGORIES, 
@@ -40,8 +43,16 @@ interface MarketLead {
 export default function MarketPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { data: userData, refetch: refetchUser } = useUser();
-  const { data: marketData, isLoading, refetch: refetchMarket } = useMarketLeads();
+  const { userId: tgUserId } = useTelegramUser();
+  const { data: userData, refetch: refetchUser } = useUser(tgUserId || undefined);
+  
+  // Запрос маркетплейса с передачей userId
+  const { data: marketData, isLoading, refetch: refetchMarket } = useQuery({
+    queryKey: ["leads", "market", tgUserId],
+    queryFn: () => leadsApi.market({ userId: tgUserId || undefined }),
+    staleTime: 10000,
+  });
+  
   const buyLead = useBuyLead();
 
   const [buyingLeadId, setBuyingLeadId] = useState<string | null>(null);

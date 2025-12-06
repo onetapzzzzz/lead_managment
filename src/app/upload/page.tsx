@@ -11,11 +11,13 @@ import { parsePhonesFromText } from "@/lib/phoneParser";
 import { useToast } from "@/contexts/ToastContext";
 import { useUploadBatch } from "@/hooks/useUploadBatch";
 import { useUser } from "@/hooks/useUser";
+import { useTelegramUser } from "@/hooks/useTelegramUser";
 import { CATEGORIES, REGIONS } from "@/lib/categories";
 
 export default function UploadPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { userId: tgUserId } = useTelegramUser();
   const [step, setStep] = useState<"category" | "region" | "text" | "result">("category");
   const [subcategory, setSubcategory] = useState("");
   const [region, setRegion] = useState("");
@@ -23,7 +25,7 @@ export default function UploadPage() {
   const [description, setDescription] = useState("");
   const [rawText, setRawText] = useState("");
   const uploadBatchMutation = useUploadBatch();
-  const { data: user } = useUser();
+  const { data: user } = useUser(tgUserId || undefined);
   const [result, setResult] = useState<{
     totalUploaded: number;
     totalValid: number;
@@ -58,6 +60,7 @@ export default function UploadPage() {
         niche: subcategory ? `Окна: ${subcategory}` : "Окна",
         region: region || undefined,
         description: description.trim() || undefined,
+        userId: tgUserId || undefined,
       });
 
       setResult({
