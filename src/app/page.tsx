@@ -179,7 +179,7 @@ export default function HomePage() {
                   Получай LC при продаже
                 </div>
                 <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary">
-                  До <b>2 LC</b> за лид (1 + 0.7 + 0.3 за 3 продажи)
+                  До <b>3.5 LC</b> за лид (2 + 1 + 0.5 за 3 продажи)
                 </div>
               </div>
             </div>
@@ -193,7 +193,7 @@ export default function HomePage() {
                   Покупай чужие лиды
                 </div>
                 <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary">
-                  Уникальные — 1 LC, после покупок — дешевле
+                  Уникальный (0 из 3) — 2 LC, затем 1 LC и 0.5 LC
                 </div>
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function HomePage() {
                         {lead.phone}
                       </div>
                       <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary">
-                        {lead.isUnique ? "✨ Уникальный" : lead.purchaseStatus}
+                        {lead.isUnique ? "✨ 0 из 3 (уникальный)" : lead.purchaseStatus}
                       </div>
                     </div>
                     <div className="text-right">

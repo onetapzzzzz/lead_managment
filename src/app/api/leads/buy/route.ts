@@ -74,11 +74,14 @@ export async function POST(request: NextRequest) {
         data: { balance: { decrement: price } },
       });
 
-      // Начисление владельцу (100% — без комиссии)
+      // Начисление владельцу (100% — без комиссии) и увеличение счётчика продаж
       if (lead.ownerId && lead.ownerId !== user.id) {
         await tx.user.update({
           where: { id: lead.ownerId },
-          data: { balance: { increment: price } },
+          data: { 
+            balance: { increment: price },
+            totalSales: { increment: 1 }, // Увеличиваем счётчик продаж
+          },
         });
 
         // Транзакция для владельца
@@ -162,6 +165,7 @@ export async function POST(request: NextRequest) {
         purchaseCount: result.updatedLead.purchaseCount,
         isArchived: result.updatedLead.isArchived,
         createdAt: result.updatedLead.createdAt.toISOString(),
+        sellerId: result.updatedLead.ownerId, // Для возможности оставить отзыв
       },
       price: result.price,
       balance: result.updatedUser.balance,

@@ -143,6 +143,17 @@ export async function GET(request: NextRequest) {
         orderBy,
         skip,
         take: limit,
+        include: {
+          owner: {
+            select: {
+              id: true,
+              username: true,
+              fullName: true,
+              rating: true,
+              totalSales: true,
+            },
+          },
+        },
       }),
       prisma.lead.count({
         where: whereCondition,
@@ -163,13 +174,20 @@ export async function GET(request: NextRequest) {
         subcategory: lead.niche?.replace("Окна: ", "") || "Окна",
         comment: lead.comment,
         price,
-        priceRub: Math.round(price * 100), // Примерный курс: 1 поинт = 100 руб
+        priceRub: Math.round(price * 100), // Примерный курс: 1 LC = 100 руб
         purchaseCount: lead.purchaseCount,
         purchaseStatus: status.label,
         isUnique: status.isUnique,
         remaining: status.remaining,
         condition: lead.purchaseCount === 0 ? "new" : "secondary",
         createdAt: lead.createdAt.toISOString(),
+        seller: lead.owner ? {
+          id: lead.owner.id,
+          username: lead.owner.username,
+          name: lead.owner.fullName || lead.owner.username || "Продавец",
+          rating: lead.owner.rating || 5.0,
+          sales: lead.owner.totalSales || 0,
+        } : null,
       };
     });
 

@@ -617,13 +617,13 @@ export default function MarketPage() {
                           )}
                         </div>
                         
-                        {/* Статус */}
-                        <div className="flex items-center gap-2">
+                        {/* Статус и продавец */}
+                        <div className="flex items-center gap-2 flex-wrap">
                           <div className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${getPurchaseBadgeStyles(lead.purchaseCount, lead.isUnique)}`}>
                           {lead.isUnique ? (
                             <>
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                              Уникальный
+                              0 из 3
                             </>
                           ) : (
                             <>
@@ -632,6 +632,13 @@ export default function MarketPage() {
                             </>
                           )}
                           </div>
+                          {/* Рейтинг продавца */}
+                          {(lead as any).seller && (
+                            <div className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+                              <span>⭐</span>
+                              <span>{((lead as any).seller.rating || 5).toFixed(1)}</span>
+                            </div>
+                          )}
                           <span className="text-xs text-light-textSecondary dark:text-dark-textSecondary">
                             {new Date(lead.createdAt).toLocaleDateString('ru-RU')}
                           </span>

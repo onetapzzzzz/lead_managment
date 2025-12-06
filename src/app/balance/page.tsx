@@ -253,25 +253,17 @@ export default function BalancePage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-green-500">✓</span>
-                1 LC за первую продажу лида
+                2 LC за продажу уникального лида (0 из 3)
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-green-500">✓</span>
-                0.7 LC за вторую и 0.3 LC за третью
+                1 LC за вторую и 0.5 LC за третью продажу
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-green-500">✓</span>
-                До 2 LC с каждого лида!
+                До 3.5 LC с каждого лида!
               </div>
             </div>
-            <Button
-              variant="secondary"
-              onClick={() => router.push("/upload")}
-              fullWidth
-              className="mt-4 py-3"
-            >
-              Загрузить лиды
-            </Button>
           </Card>
         </motion.div>
       </main>

@@ -3,20 +3,20 @@
  * 
  * Логика:
  * - Лид может быть куплен максимум 3 раза
- * - 1-й покупатель платит 1 поинт
- * - 2-й покупатель платит 0.7 поинта
- * - 3-й покупатель платит 0.3 поинта
- * - Владелец получает до 2 поинтов за лид (1 + 0.7 + 0.3 = 2)
+ * - Уникальный (0 из 3) - 2 LC
+ * - 1 из 3 - 1 LC
+ * - 2 из 3 - 0.5 LC
+ * - Владелец получает до 3.5 LC за лид (2 + 1 + 0.5 = 3.5)
  * - После 3-х покупок лид уходит в архив
  */
 
-export const LEAD_PRICES = [1.0, 0.7, 0.3] as const;
+export const LEAD_PRICES = [2.0, 1.0, 0.5] as const;
 export const MAX_PURCHASES = 3;
 
 /**
  * Получить цену для следующей покупки
  * @param purchaseCount - сколько раз уже купили (0, 1, 2)
- * @returns цена в поинтах или null если лид уже в архиве
+ * @returns цена в LC или null если лид уже в архиве
  */
 export function getLeadPrice(purchaseCount: number): number | null {
   if (purchaseCount >= MAX_PURCHASES) {
@@ -36,7 +36,7 @@ export function isLeadAvailable(purchaseCount: number): boolean {
  * Получить максимальный доход владельца за лид
  */
 export function getMaxOwnerReward(): number {
-  return LEAD_PRICES.reduce((sum, price) => sum + price, 0); // 1 + 0.7 + 0.3 = 2
+  return LEAD_PRICES.reduce((sum, price) => sum + price, 0); // 2 + 1 + 0.5 = 3.5
 }
 
 /**
@@ -50,7 +50,9 @@ export function formatPrice(price: number): string {
 }
 
 /**
- * Получить статус покупок для UI (например: "1 из 3", "Уникальный")
+ * Получить статус покупок для UI
+ * Уникальный = 0 из 3
+ * После покупок: 1 из 3, 2 из 3
  */
 export function getPurchaseStatus(purchaseCount: number): {
   label: string;
@@ -61,7 +63,7 @@ export function getPurchaseStatus(purchaseCount: number): {
   
   if (purchaseCount === 0) {
     return {
-      label: "Уникальный",
+      label: "0 из 3",
       isUnique: true,
       remaining,
     };
@@ -83,6 +85,3 @@ export function getPurchaseBadgeColor(purchaseCount: number): string {
   if (purchaseCount === 2) return "orange"; // 2 из 3
   return "red"; // Архив
 }
-
-
-
