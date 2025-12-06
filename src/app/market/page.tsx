@@ -49,7 +49,7 @@ export default function MarketPage() {
   // Запрос маркетплейса с передачей userId
   const { data: marketData, isLoading, refetch: refetchMarket } = useQuery({
     queryKey: ["leads", "market", tgUserId],
-    queryFn: () => leadsApi.market({ userId: tgUserId || undefined }),
+    queryFn: () => leadsApi.market({ page: 1, limit: 100, userId: tgUserId || undefined }),
     staleTime: 10000,
   });
   
