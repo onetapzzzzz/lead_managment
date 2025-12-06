@@ -173,6 +173,11 @@ export default function MarketPage() {
   }, [leads, subcategoryFilter, regionFilter, cityFilter, priceFromFilter, priceToFilter, dateFromFilter, dateToFilter, uniquenessFilter, conditionFilter, sortBy]);
 
   const handleBuyLead = async (leadId: string, price: number) => {
+    if (!tgUserId) {
+      showToast("Требуется авторизация", "error");
+      return;
+    }
+    
     if ((userData?.balance || 0) < price) {
       showToast("Недостаточно Lead Coin", "error");
       return;
@@ -180,7 +185,7 @@ export default function MarketPage() {
 
     setBuyingLeadId(leadId);
     try {
-      const result = await buyLead.mutateAsync({ leadId });
+      const result = await buyLead.mutateAsync({ leadId, userId: tgUserId });
       showToast(`Лид куплен за ${result.price} LC`, "success");
       refetchUser();
       refetchMarket();
