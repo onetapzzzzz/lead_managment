@@ -4,6 +4,7 @@ import { ToastProvider } from "@/contexts/ToastContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { NavigationBar } from "@/components/NavigationBar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { KeyboardHandler } from "@/components/KeyboardHandler";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -43,6 +44,7 @@ export default function RootLayout({
           <QueryProvider>
             <ToastProvider>
               <CartProvider>
+                <KeyboardHandler />
                 {children}
                 <NavigationBar />
               </CartProvider>

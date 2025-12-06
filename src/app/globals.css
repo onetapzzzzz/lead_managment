@@ -21,6 +21,10 @@
     --tg-theme-button-color: var(--accent);
     --tg-theme-button-text-color: #FFFFFF;
     --tg-theme-secondary-bg-color: var(--surface);
+    
+    /* Keyboard height variable - будет обновляться JS */
+    --keyboard-height: 0px;
+    --visual-viewport-height: 100vh;
   }
 
   .dark {
@@ -56,6 +60,9 @@
     scroll-behavior: smooth;
     /* Prevent overscroll */
     overscroll-behavior: none;
+    /* Height based on visual viewport */
+    height: 100%;
+    height: var(--visual-viewport-height, 100vh);
   }
 
   body {
@@ -67,14 +74,15 @@
     background-color: var(--tg-theme-bg-color, var(--bg));
     color: var(--tg-theme-text-color, var(--text));
     /* Mobile optimizations */
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100%;
+    min-height: var(--visual-viewport-height, 100vh);
     overflow-x: hidden;
     /* Safe area support */
     padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    /* Bottom padding с учётом клавиатуры */
+    padding-bottom: max(env(safe-area-inset-bottom), var(--keyboard-height, 0px));
   }
 
   /* Prevent pull-to-refresh on mobile */
@@ -100,6 +108,13 @@
   /* iOS input zoom prevention */
   input, select, textarea {
     font-size: 16px !important;
+  }
+
+  /* Автоскролл при фокусе на инпуте */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    scroll-margin-bottom: calc(var(--keyboard-height, 0px) + 20px);
   }
 }
 
@@ -137,6 +152,16 @@
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
+  /* Отступ с учётом клавиатуры */
+  .pb-keyboard {
+    padding-bottom: var(--keyboard-height, 0px);
+  }
+
+  /* Margin с учётом клавиатуры */
+  .mb-keyboard {
+    margin-bottom: var(--keyboard-height, 0px);
+  }
+
   /* Touch-friendly buttons */
   .touch-btn {
     @apply min-h-[48px] min-w-[48px] active:scale-95 transition-transform duration-100;
@@ -156,5 +181,17 @@
   .min-h-screen-safe {
     min-height: 100vh;
     min-height: 100dvh;
+  }
+
+  /* Height с учётом клавиатуры */
+  .h-visual-viewport {
+    height: var(--visual-viewport-height, 100vh);
+  }
+
+  /* Для элементов, которые должны прилипать к низу экрана */
+  .sticky-keyboard-aware {
+    position: sticky;
+    bottom: var(--keyboard-height, 0px);
+    transition: bottom 0.15s ease-out;
   }
 }
