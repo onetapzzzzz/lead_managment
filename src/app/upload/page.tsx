@@ -17,7 +17,7 @@ import { CATEGORIES, REGIONS } from "@/lib/categories";
 export default function UploadPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { userId: tgUserId } = useTelegramUser();
+  const { userId: tgUserId, username: tgUsername, fullName: tgFullName } = useTelegramUser();
   const [step, setStep] = useState<"category" | "region" | "text" | "result">("category");
   const [subcategory, setSubcategory] = useState("");
   const [region, setRegion] = useState("");
@@ -25,7 +25,11 @@ export default function UploadPage() {
   const [description, setDescription] = useState("");
   const [rawText, setRawText] = useState("");
   const uploadBatchMutation = useUploadBatch();
-  const { data: user } = useUser(tgUserId || undefined);
+  const { data: user } = useUser({ 
+    userId: tgUserId || undefined,
+    username: tgUsername || undefined,
+    fullName: tgFullName || undefined
+  });
   const [result, setResult] = useState<{
     totalUploaded: number;
     totalValid: number;

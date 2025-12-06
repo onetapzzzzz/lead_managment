@@ -43,8 +43,12 @@ interface MarketLead {
 export default function MarketPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { userId: tgUserId } = useTelegramUser();
-  const { data: userData, refetch: refetchUser } = useUser(tgUserId || undefined);
+  const { userId: tgUserId, username: tgUsername, fullName: tgFullName } = useTelegramUser();
+  const { data: userData, refetch: refetchUser } = useUser({ 
+    userId: tgUserId || undefined,
+    username: tgUsername || undefined,
+    fullName: tgFullName || undefined
+  });
   
   // Запрос маркетплейса с передачей userId
   const { data: marketData, isLoading, refetch: refetchMarket } = useQuery({

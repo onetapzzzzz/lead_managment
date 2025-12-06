@@ -1,38 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { userGetSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const params = userGetSchema.parse({
-      userId: searchParams.get("userId") || undefined,
-    });
+    const telegramId = searchParams.get("userId"); // Это telegramId
+    const username = searchParams.get("username");
+    const fullName = searchParams.get("fullName");
 
-    // Для демо используем первого пользователя или создаём его
+    // Если нет telegramId - это не авторизованный запрос
+    if (!telegramId) {
+      return NextResponse.json(
+        { error: "Требуется авторизация через Telegram" },
+        { status: 401 }
+      );
+    }
+
+    // Ищем пользователя по Telegram ID
     let user = await prisma.user.findFirst({
-      orderBy: { createdAt: "desc" },
+      where: { telegramId: telegramId },
     });
 
+    // Если пользователь не найден - создаём нового
     if (!user) {
       user = await prisma.user.create({
         data: {
-          telegramId: "demo_user",
-          balance: 1000,
+          telegramId: telegramId,
+          username: username || null,
+          fullName: fullName || null,
+          balance: 1000, // Начальный баланс для новых пользователей
         },
       });
-    }
-
-    if (params.userId && params.userId !== user.id) {
-      user = await prisma.user.findUnique({
-        where: { id: params.userId },
-      });
-
-      if (!user) {
-        return NextResponse.json(
-          { error: "Пользователь не найден" },
-          { status: 404 }
-        );
+    } else {
+      // Обновляем username и fullName если они изменились
+      if ((username && username !== user.username) || (fullName && fullName !== user.fullName)) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            username: username || user.username,
+            fullName: fullName || user.fullName,
+          },
+        });
       }
     }
 
@@ -52,4 +60,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

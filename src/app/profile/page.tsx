@@ -7,10 +7,17 @@ import { Header } from "@/components/Header";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { useUser } from "@/hooks/useUser";
+import { useTelegramUser } from "@/hooks/useTelegramUser";
+import { formatPrice } from "@/lib/leadPricing";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { data: user, isLoading } = useUser();
+  const { userId, username, fullName } = useTelegramUser();
+  const { data: user, isLoading } = useUser({ 
+    userId: userId || undefined, 
+    username: username || undefined, 
+    fullName: fullName || undefined 
+  });
 
   return (
     <motion.div
@@ -32,13 +39,26 @@ export default function ProfilePage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-h2 font-bold text-light-text dark:text-dark-text mb-1">
-                  {isLoading ? "Загрузка..." : user?.fullName || user?.username || user?.telegramId || "Пользователь"}
+                <h2 className="text-xl font-bold text-light-text dark:text-dark-text mb-1">
+                  {isLoading ? "Загрузка..." : user?.fullName || user?.username || "Пользователь"}
                 </h2>
-                <p className="text-small text-light-textSecondary dark:text-dark-textSecondary">
+                <p className="text-sm text-light-textSecondary dark:text-dark-textSecondary">
                   {user?.username && `@${user.username}`}
                   {user?.telegramId && ` • ID: ${user.telegramId}`}
                 </p>
+              </div>
+            </div>
+
+            {/* Баланс */}
+            <div className="bg-light-bg dark:bg-dark-bg rounded-xl p-4">
+              <div className="text-sm text-light-textSecondary dark:text-dark-textSecondary mb-1">
+                Баланс Lead Coin
+              </div>
+              <div className="text-2xl font-bold text-light-accent dark:text-dark-accent">
+                {formatPrice(user?.balance || 0)} LC
+              </div>
+              <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary mt-1">
+                ≈ {Math.round((user?.balance || 0) * 100)} ₽
               </div>
             </div>
           </Card>
@@ -47,16 +67,29 @@ export default function ProfilePage() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, ease: "easeOut", delay: 0.05 }}
+            >
+              <Button
+                fullWidth
+                variant="primary"
+                onClick={() => router.push("/leads")}
+                className="py-3.5"
+              >
+                Мои лиды
+              </Button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.24, ease: "easeOut", delay: 0.1 }}
             >
               <Button
                 fullWidth
                 variant="secondary"
-                onClick={() => {
-                  // Настройки
-                }}
+                onClick={() => router.push("/history")}
+                className="py-3.5"
               >
-                Настройки
+                История транзакций
               </Button>
             </motion.div>
             <motion.div
@@ -68,8 +101,10 @@ export default function ProfilePage() {
                 fullWidth
                 variant="secondary"
                 onClick={() => {
-                  // Поддержка
+                  // Поддержка - открыть бота
+                  window.open("https://t.me/board_traff_bot", "_blank");
                 }}
+                className="py-3.5"
               >
                 Поддержка
               </Button>
@@ -80,4 +115,3 @@ export default function ProfilePage() {
     </motion.div>
   );
 }
-

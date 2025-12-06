@@ -83,8 +83,12 @@ async function fetchApi<T>(
 
 // User API
 export const userApi = {
-  get: async (userId?: string) => {
-    const params = userId ? `?userId=${userId}` : "";
+  get: async (params?: { userId?: string; username?: string; fullName?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.userId) queryParams.set("userId", params.userId);
+    if (params?.username) queryParams.set("username", params.username);
+    if (params?.fullName) queryParams.set("fullName", params.fullName);
+    const queryString = queryParams.toString();
     return fetchApi<{
       id: string;
       telegramId: string | null;
@@ -92,7 +96,7 @@ export const userApi = {
       fullName: string | null;
       balance: number;
       createdAt: string;
-    }>(`/user/get${params}`);
+    }>(`/user/get${queryString ? `?${queryString}` : ""}`);
   },
 
   updateBalance: async (data: z.infer<typeof balanceUpdateSchema>) => {

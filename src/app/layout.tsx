@@ -5,6 +5,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { NavigationBar } from "@/components/NavigationBar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { KeyboardHandler } from "@/components/KeyboardHandler";
+import { TelegramAuth } from "@/components/TelegramAuth";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -44,9 +45,11 @@ export default function RootLayout({
           <QueryProvider>
             <ToastProvider>
               <CartProvider>
-                <KeyboardHandler />
-                {children}
-                <NavigationBar />
+                <TelegramAuth>
+                  <KeyboardHandler />
+                  {children}
+                  <NavigationBar />
+                </TelegramAuth>
               </CartProvider>
             </ToastProvider>
           </QueryProvider>
