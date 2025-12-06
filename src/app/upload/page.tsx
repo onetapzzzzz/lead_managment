@@ -57,7 +57,7 @@ export default function UploadPage() {
     try {
       const data = await uploadBatchMutation.mutateAsync({
         rawText,
-        niche: subcategory ? `Окна: ${subcategory}` : "Окна",
+        niche: subcategory || "Общая категория",
         region: region || undefined,
         description: description.trim() || undefined,
         userId: tgUserId || undefined,
@@ -103,16 +103,13 @@ export default function UploadPage() {
             transition={{ duration: 0.24 }}
             className="space-y-4"
           >
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl">{windowsCategory.icon}</span>
-              <div>
-                <h2 className="text-h2 font-semibold text-light-text dark:text-dark-text">
-                  {windowsCategory.name}
-                </h2>
-                <p className="text-small text-light-textSecondary dark:text-dark-textSecondary">
-                  Выберите подкатегорию
-                </p>
-              </div>
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-light-text dark:text-dark-text">
+                Выберите подкатегорию
+              </h2>
+              <p className="text-sm text-light-textSecondary dark:text-dark-textSecondary mt-1">
+                Укажите тип лидов для загрузки
+              </p>
             </div>
             
             <div className="space-y-2">
@@ -122,7 +119,7 @@ export default function UploadPage() {
                   className={`p-4 cursor-pointer transition-all ${
                     subcategory === sub.name 
                       ? "ring-2 ring-light-accent dark:ring-dark-accent bg-light-accent/5 dark:bg-dark-accent/5" 
-                      : "hover:bg-light-surface/80 dark:hover:bg-dark-surface/80"
+                      : "hover:bg-light-surface/80 dark:hover:bg-dark-surface/80 active:scale-[0.98]"
                   }`}
                   onClick={() => {
                     setSubcategory(sub.name);
@@ -130,10 +127,10 @@ export default function UploadPage() {
                   }}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-body text-light-text dark:text-dark-text">
+                    <span className="text-sm text-light-text dark:text-dark-text pr-2">
                       {sub.name}
                     </span>
-                    <svg className="w-5 h-5 text-light-textSecondary dark:text-dark-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-light-textSecondary dark:text-dark-textSecondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -153,13 +150,13 @@ export default function UploadPage() {
             <div className="flex items-center gap-3 mb-2">
               <button
                 onClick={() => setStep("category")}
-                className="tap-target text-light-accent dark:text-dark-accent font-medium"
+                className="text-light-accent dark:text-dark-accent font-medium text-sm py-2"
               >
                 ← Назад
               </button>
             </div>
             
-            <h2 className="text-h2 font-semibold text-light-text dark:text-dark-text">
+            <h2 className="text-xl font-semibold text-light-text dark:text-dark-text">
               Выберите регион
             </h2>
             
@@ -169,15 +166,15 @@ export default function UploadPage() {
                 type="text"
                 value={regionSearch}
                 onChange={(e) => setRegionSearch(e.target.value)}
-                placeholder="🔍 Поиск региона..."
-                className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text px-4 py-3 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors"
+                placeholder="Поиск региона..."
+                className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text px-4 py-3 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors"
               />
             </div>
 
             {/* Список регионов */}
-            <div className="max-h-[50vh] overflow-y-auto space-y-1 rounded-card border border-light-border dark:border-dark-border p-2 no-scrollbar">
+            <div className="max-h-[50vh] overflow-y-auto space-y-1 rounded-xl border border-light-border dark:border-dark-border p-2 no-scrollbar">
               {filteredRegions.length === 0 ? (
-                <div className="p-4 text-center text-light-textSecondary dark:text-dark-textSecondary">
+                <div className="p-4 text-center text-light-textSecondary dark:text-dark-textSecondary text-sm">
                   Регион не найден
                 </div>
               ) : (
@@ -188,7 +185,7 @@ export default function UploadPage() {
                       setRegion(r);
                       setStep("text");
                     }}
-                    className={`w-full text-left px-4 py-3 rounded-button transition-colors ${
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-colors text-sm ${
                       region === r
                         ? "bg-light-accent dark:bg-dark-accent text-white"
                         : "hover:bg-light-surface dark:hover:bg-dark-surface text-light-text dark:text-dark-text"
@@ -207,8 +204,9 @@ export default function UploadPage() {
                 setStep("text");
               }}
               fullWidth
+              className="py-3"
             >
-              Пропустить выбор региона
+              Пропустить
             </Button>
           </motion.div>
         )}
@@ -223,7 +221,7 @@ export default function UploadPage() {
             <div className="flex items-center gap-3 mb-2">
               <button
                 onClick={() => setStep("region")}
-                className="tap-target text-light-accent dark:text-dark-accent font-medium"
+                className="text-light-accent dark:text-dark-accent font-medium text-sm py-2"
               >
                 ← Назад
               </button>
@@ -232,12 +230,12 @@ export default function UploadPage() {
             {/* Выбранные параметры */}
             <Card className="p-3">
               <div className="flex flex-wrap gap-2">
-                <span className="text-small px-3 py-1 rounded-full bg-light-accent/10 dark:bg-dark-accent/10 text-light-accent dark:text-dark-accent font-medium">
-                  🪟 {subcategory || "Окна"}
+                <span className="text-xs px-3 py-1.5 rounded-lg bg-light-accent/10 dark:bg-dark-accent/10 text-light-accent dark:text-dark-accent font-medium">
+                  {subcategory || "Общая категория"}
                 </span>
                 {region && (
-                  <span className="text-small px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 font-medium">
-                    📍 {region}
+                  <span className="text-xs px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 font-medium">
+                    {region}
                   </span>
                 )}
               </div>
@@ -245,39 +243,39 @@ export default function UploadPage() {
             
             {/* Описание */}
             <Card className="p-4">
-              <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                📝 Комментарий (необязательно)
+              <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                Комментарий (необязательно)
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Например: горячие лиды с выставки, интересуются остеклением..."
-                className="w-full min-h-[80px] rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
+                placeholder="Например: горячие лиды с выставки..."
+                className="w-full min-h-[80px] rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
               />
             </Card>
 
             {/* Телефоны */}
             <Card className="p-4">
-              <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                📞 Телефоны <span className="text-light-error dark:text-dark-error">*</span>
+              <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                Телефоны <span className="text-light-error dark:text-dark-error">*</span>
               </label>
               <textarea
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
                 placeholder={"+7 999 123-45-67\n8 (912) 345-67-89\nили любой текст с номерами..."}
-                className="w-full min-h-[150px] rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-body font-mono focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
+                className="w-full min-h-[150px] rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-4 py-3 text-sm font-mono focus:outline-none focus:border-light-accent dark:focus:border-dark-accent transition-colors resize-none"
                 autoFocus
               />
               {rawText ? (
                 <div className="mt-3 flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${validCount > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span className="text-small text-light-textSecondary dark:text-dark-textSecondary">
+                  <span className="text-sm text-light-textSecondary dark:text-dark-textSecondary">
                     Найдено телефонов: <span className={`font-semibold ${validCount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>{validCount}</span>
                   </span>
                 </div>
               ) : (
-                <div className="mt-2 text-small text-light-textSecondary dark:text-dark-textSecondary">
-                  Вставьте номера в любом формате — мы их автоматически распарсим
+                <div className="mt-2 text-xs text-light-textSecondary dark:text-dark-textSecondary">
+                  Вставьте номера в любом формате
                 </div>
               )}
             </Card>
@@ -286,7 +284,7 @@ export default function UploadPage() {
               onClick={handleSubmit}
               disabled={uploadBatchMutation.isPending || validCount === 0}
               fullWidth
-              className="h-14"
+              className="py-4 text-base"
             >
               {uploadBatchMutation.isPending ? "Загрузка..." : `Загрузить ${validCount > 0 ? validCount + ' лидов' : ''}`}
             </Button>
@@ -302,10 +300,10 @@ export default function UploadPage() {
           >
             <Card className="p-6 text-center">
               <div className="text-4xl mb-4">{result.totalValid > 0 ? "✅" : "⚠️"}</div>
-              <h2 className="text-h2 font-bold text-light-text dark:text-dark-text mb-2">
+              <h2 className="text-xl font-bold text-light-text dark:text-dark-text mb-2">
                 {result.totalValid > 0 ? "Загрузка завершена!" : "Лиды не добавлены"}
               </h2>
-              <div className="space-y-2 text-body text-light-textSecondary dark:text-dark-textSecondary">
+              <div className="space-y-2 text-sm text-light-textSecondary dark:text-dark-textSecondary">
                 <div>Найдено номеров: <span className="font-semibold text-light-text dark:text-dark-text">{result.totalUploaded}</span></div>
                 <div>Добавлено новых: <span className="font-semibold text-light-success dark:text-dark-success">{result.totalValid}</span></div>
                 {result.duplicatesRejected > 0 && (
@@ -314,27 +312,29 @@ export default function UploadPage() {
               </div>
               
               {result.totalValid > 0 && (
-                <div className="mt-4 p-3 rounded-card bg-light-accent/10 dark:bg-dark-accent/10">
-                  <div className="text-small text-light-accent dark:text-dark-accent font-medium">
-                    💡 Поинты начислятся, когда лиды купят!
+                <div className="mt-4 p-3 rounded-xl bg-light-accent/10 dark:bg-dark-accent/10">
+                  <div className="text-sm text-light-accent dark:text-dark-accent font-medium">
+                    Lead Coin начислятся при продаже!
                   </div>
-                  <div className="text-small text-light-textSecondary dark:text-dark-textSecondary mt-1">
-                    До <b>2 поинтов</b> за каждый лид (1 + 0.7 + 0.3)
+                  <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary mt-1">
+                    До <b>2 LC</b> за каждый лид (1 + 0.7 + 0.3)
                   </div>
                 </div>
               )}
             </Card>
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 onClick={handleReset}
                 variant="secondary"
                 fullWidth
+                className="py-3"
               >
                 Загрузить ещё
               </Button>
               <Button
                 onClick={() => router.push("/market")}
                 fullWidth
+                className="py-3"
               >
                 В маркет
               </Button>

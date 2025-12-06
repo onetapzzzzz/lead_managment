@@ -2,7 +2,6 @@
 
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { scaleTap } from "@/lib/motion";
 import clsx from "clsx";
 
 export interface ButtonProps {
@@ -31,10 +30,11 @@ export const Button = ({
       type={type}
       onClick={onClick}
       className={clsx(
-        "tap-target rounded-button font-semibold text-body transition-all",
+        "rounded-xl font-semibold text-sm transition-all px-5 py-3",
         "focus:outline-none focus:ring-2 focus:ring-offset-2",
+        "flex items-center justify-center gap-2 whitespace-nowrap",
         {
-          "bg-light-accent dark:bg-dark-accent text-white shadow-sm hover:shadow-md focus:ring-light-accent dark:focus:ring-dark-accent":
+          "bg-light-accent dark:bg-dark-accent text-white shadow-sm hover:shadow-md focus:ring-light-accent dark:focus:ring-dark-accent active:bg-light-accent/90 dark:active:bg-dark-accent/90":
             variant === "primary",
           "bg-transparent border-2 border-light-accent dark:border-dark-accent text-light-accent dark:text-dark-accent hover:bg-light-accent/10 dark:hover:bg-dark-accent/10 focus:ring-light-accent dark:focus:ring-dark-accent":
             variant === "secondary",
@@ -49,7 +49,3 @@ export const Button = ({
     </motion.button>
   );
 };
-
-
-
-

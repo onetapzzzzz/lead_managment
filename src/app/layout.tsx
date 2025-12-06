@@ -20,12 +20,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Lead Exchange",
-  description: "Система обмена лидами",
+  title: "Board Traff",
+  description: "Платформа обмена лидами",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Lead Exchange",
+    title: "Board Traff",
   },
 };
 

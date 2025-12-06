@@ -170,14 +170,14 @@ export default function MarketPage() {
 
   const handleBuyLead = async (leadId: string, price: number) => {
     if ((userData?.balance || 0) < price) {
-      showToast("Недостаточно поинтов", "error");
+      showToast("Недостаточно Lead Coin", "error");
       return;
     }
 
     setBuyingLeadId(leadId);
     try {
       const result = await buyLead.mutateAsync({ leadId });
-      showToast(`Лид куплен за ${result.price} поинтов!`, "success");
+      showToast(`Лид куплен за ${result.price} LC`, "success");
       refetchUser();
       refetchMarket();
     } catch (error: any) {
@@ -225,22 +225,17 @@ export default function MarketPage() {
         <div className="container-mobile py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-h2 font-bold text-light-text dark:text-dark-text">
-              🛒 Маркетплейс
+              Маркетплейс
             </h1>
             
             {/* Баланс справа */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-light-surface dark:bg-dark-surface rounded-xl px-3 py-2">
               <div className="text-right">
-                <div className="text-small text-light-textSecondary dark:text-dark-textSecondary">
-                  Баланс
+                <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary">
+                  Lead Coin
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-body font-bold text-light-accent dark:text-dark-accent">
-                    {formatPrice(userData?.balance || 0)} п.
-                  </span>
-                  <span className="text-small text-light-textSecondary dark:text-dark-textSecondary">
-                    ≈ {Math.round((userData?.balance || 0) * 100)} ₽
-                  </span>
+                <div className="text-body font-bold text-light-accent dark:text-dark-accent">
+                  {formatPrice(userData?.balance || 0)} LC
                 </div>
               </div>
             </div>
@@ -261,7 +256,7 @@ export default function MarketPage() {
               <button
                 key={option.id}
                 onClick={() => setSortBy(option.id)}
-                className={`whitespace-nowrap py-2 px-4 rounded-full text-small font-medium transition-all ${
+                className={`whitespace-nowrap py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
                   sortBy === option.id
                     ? "bg-light-accent dark:bg-dark-accent text-white shadow-sm"
                     : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
@@ -270,20 +265,20 @@ export default function MarketPage() {
                 {option.name}
               </button>
             ))}
-            <button
+              <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`whitespace-nowrap py-2 px-4 rounded-full text-small font-medium transition-all flex items-center gap-1.5 ${
+              className={`whitespace-nowrap py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
                 showFilters || hasActiveFilters
                   ? "bg-light-accent dark:bg-dark-accent text-white"
-                  : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
-              }`}
-            >
-              ⚙️ Фильтры
+                    : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
+                }`}
+              >
+              Фильтры
               {hasActiveFilters && (
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
               )}
-            </button>
-          </div>
+              </button>
+            </div>
         </motion.div>
 
         {/* Расширенные фильтры */}
@@ -298,13 +293,13 @@ export default function MarketPage() {
               <Card className="p-4 space-y-4">
                 {/* Подкатегория */}
                 <div>
-                  <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                    🪟 Подкатегория
+                  <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                    Подкатегория
                   </label>
                   <select
                     value={subcategoryFilter}
                     onChange={(e) => setSubcategoryFilter(e.target.value)}
-                    className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                    className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
                   >
                     <option value="">Все подкатегории</option>
                     {windowsCategory.subcategories.map((sub) => (
@@ -315,20 +310,20 @@ export default function MarketPage() {
 
                 {/* Гео: Регион */}
                 <div>
-                  <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                    📍 Регион (область)
+                  <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                    Регион
                   </label>
                   <input
                     type="text"
                     value={regionSearch}
                     onChange={(e) => setRegionSearch(e.target.value)}
-                    placeholder="🔍 Поиск региона..."
-                    className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent mb-2"
+                    placeholder="Поиск региона..."
+                    className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent mb-2"
                   />
                   <select
                     value={regionFilter}
                     onChange={(e) => setRegionFilter(e.target.value)}
-                    className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                    className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
                   >
                     <option value="">Вся Россия</option>
                     {filteredRegions.map((r) => (
@@ -340,13 +335,13 @@ export default function MarketPage() {
                 {/* Гео: Город */}
                 {regionFilter && citiesForRegion.length > 0 && (
                   <div>
-                    <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                      🏙️ Город
+                    <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                      Город
                     </label>
                     <select
                       value={cityFilter}
                       onChange={(e) => setCityFilter(e.target.value)}
-                      className="w-full rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                      className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
                     >
                       <option value="">Весь регион</option>
                       {citiesForRegion.map((city) => (
@@ -358,10 +353,10 @@ export default function MarketPage() {
 
                 {/* Цена */}
                 <div>
-                  <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                    💰 Цена (поинты)
+                  <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                    Цена (Lead Coin)
                   </label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <input
                       type="number"
                       value={priceFromFilter}
@@ -369,7 +364,7 @@ export default function MarketPage() {
                       placeholder="От"
                       step="0.1"
                       min="0"
-                      className="flex-1 rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                      className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
                     />
                     <input
                       type="number"
@@ -378,43 +373,43 @@ export default function MarketPage() {
                       placeholder="До"
                       step="0.1"
                       min="0"
-                      className="flex-1 rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                      className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
                     />
                   </div>
                 </div>
 
                 {/* Дата добавления */}
                 <div>
-                  <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                    📅 Дата добавления
+                  <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                    Дата добавления
                   </label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <input
                       type="date"
                       value={dateFromFilter}
                       onChange={(e) => setDateFromFilter(e.target.value)}
-                      className="flex-1 rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                      className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
                     />
                     <input
                       type="date"
                       value={dateToFilter}
                       onChange={(e) => setDateToFilter(e.target.value)}
-                      className="flex-1 rounded-button border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-body focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
+                      className="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text px-3 py-2.5 text-sm focus:outline-none focus:border-light-accent dark:focus:border-dark-accent"
                     />
                   </div>
                 </div>
 
                 {/* Уникальность */}
                 <div>
-                  <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                    ✨ Уникальность
+                  <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                    Уникальность
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {UNIQUENESS_OPTIONS.map((option) => (
                       <button
                         key={option.id}
                         onClick={() => setUniquenessFilter(option.id)}
-                        className={`py-2 px-3 rounded-button text-small font-medium transition-all ${
+                        className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all text-center ${
                           uniquenessFilter === option.id
                             ? "bg-light-accent dark:bg-dark-accent text-white"
                             : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
@@ -428,15 +423,15 @@ export default function MarketPage() {
 
                 {/* Состояние */}
                 <div>
-                  <label className="block text-small font-medium text-light-text dark:text-dark-text mb-2">
-                    📊 Состояние лида
+                  <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                    Состояние лида
                   </label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {CONDITION_OPTIONS.map((option) => (
                       <button
                         key={option.id}
                         onClick={() => setConditionFilter(option.id)}
-                        className={`flex-1 py-2 px-3 rounded-button text-small font-medium transition-all ${
+                        className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all text-center ${
                           conditionFilter === option.id
                             ? "bg-light-accent dark:bg-dark-accent text-white"
                             : "bg-light-surface dark:bg-dark-surface text-light-textSecondary dark:text-dark-textSecondary"
@@ -449,12 +444,12 @@ export default function MarketPage() {
                 </div>
 
                 {/* Кнопки */}
-                <div className="flex gap-2 pt-2">
+                <div className="grid grid-cols-2 gap-3 pt-2">
                   <Button
                     variant="secondary"
                     onClick={clearFilters}
                     fullWidth
-                    className="text-small"
+                    className="py-3 text-sm"
                   >
                     Сбросить
                   </Button>
@@ -462,7 +457,7 @@ export default function MarketPage() {
                     variant="primary"
                     onClick={() => setShowFilters(false)}
                     fullWidth
-                    className="text-small"
+                    className="py-3 text-sm"
                   >
                     Применить
                   </Button>
@@ -474,44 +469,44 @@ export default function MarketPage() {
 
         {/* Активные фильтры */}
         {hasActiveFilters && !showFilters && (
-          <motion.div
+        <motion.div
             initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
             className="flex flex-wrap gap-2 mb-4"
           >
             {subcategoryFilter && (
-              <span className="text-small px-2 py-1 rounded-full bg-light-accent/10 dark:bg-dark-accent/10 text-light-accent dark:text-dark-accent flex items-center gap-1">
-                🪟 {subcategoryFilter.length > 15 ? subcategoryFilter.substring(0, 15) + "..." : subcategoryFilter}
+              <span className="text-xs px-2.5 py-1.5 rounded-lg bg-light-accent/10 dark:bg-dark-accent/10 text-light-accent dark:text-dark-accent flex items-center gap-1">
+                {subcategoryFilter.length > 15 ? subcategoryFilter.substring(0, 15) + "..." : subcategoryFilter}
                 <button onClick={() => setSubcategoryFilter("")} className="ml-1 opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {regionFilter && (
-              <span className="text-small px-2 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center gap-1">
-                📍 {regionFilter}
+              <span className="text-xs px-2.5 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 flex items-center gap-1">
+                {regionFilter}
                 <button onClick={() => setRegionFilter("")} className="ml-1 opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {cityFilter && (
-              <span className="text-small px-2 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                🏙️ {cityFilter}
+              <span className="text-xs px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                {cityFilter}
                 <button onClick={() => setCityFilter("")} className="ml-1 opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {uniquenessFilter && (
-              <span className="text-small px-2 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center gap-1">
-                ✨ {UNIQUENESS_OPTIONS.find(o => o.id === uniquenessFilter)?.name}
+              <span className="text-xs px-2.5 py-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                {UNIQUENESS_OPTIONS.find(o => o.id === uniquenessFilter)?.name}
                 <button onClick={() => setUniquenessFilter("")} className="ml-1 opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             {conditionFilter && (
-              <span className="text-small px-2 py-1 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center gap-1">
-                {conditionFilter === "new" ? "🆕 Новый" : "🔄 Вторичка"}
+              <span className="text-xs px-2.5 py-1.5 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                {conditionFilter === "new" ? "Новый" : "Вторичка"}
                 <button onClick={() => setConditionFilter("")} className="ml-1 opacity-60 hover:opacity-100">✕</button>
               </span>
             )}
             <button
               onClick={clearFilters}
-              className="text-small px-2 py-1 rounded-full bg-red-500/10 text-red-600 dark:text-red-400"
+              className="text-xs px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400"
             >
               Сбросить все
             </button>
@@ -519,23 +514,23 @@ export default function MarketPage() {
         )}
 
         {/* Статистика */}
-        <div className="mb-4 flex items-center justify-between text-small text-light-textSecondary dark:text-dark-textSecondary">
-          <span>Найдено: {filteredLeads.length} из {leads.length}</span>
+        <div className="mb-4 flex items-center justify-between text-xs text-light-textSecondary dark:text-dark-textSecondary">
+          <span>Найдено: {filteredLeads.length}</span>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-green-500" />
-              <span>1п.</span>
+              <span>1 LC</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-yellow-500" />
-              <span>0.7п.</span>
-            </div>
+              <span>0.7 LC</span>
+              </div>
             <div className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-orange-500" />
-              <span>0.3п.</span>
+              <span>0.3 LC</span>
+              </div>
+              </div>
             </div>
-          </div>
-        </div>
 
         {/* Список лидов */}
         <motion.div
@@ -559,13 +554,13 @@ export default function MarketPage() {
                   : "Нет доступных лидов"}
               </div>
               {hasActiveFilters ? (
-                <Button variant="secondary" onClick={clearFilters}>
+                <Button variant="secondary" onClick={clearFilters} className="px-6 py-2.5">
                   Сбросить фильтры
                 </Button>
               ) : (
-                <Button variant="primary" onClick={() => router.push("/upload")}>
-                  Загрузить лиды
-                </Button>
+                <Button variant="primary" onClick={() => router.push("/upload")} className="px-6 py-2.5">
+                Загрузить лиды
+              </Button>
               )}
             </Card>
           ) : (
@@ -585,13 +580,13 @@ export default function MarketPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         {/* Телефон */}
-                        <div className="text-body font-mono font-semibold text-light-text dark:text-dark-text mb-1">
+                        <div className="text-base font-mono font-semibold text-light-text dark:text-dark-text mb-1">
                           {lead.phone}
                         </div>
                         
                         {/* Описание */}
                         {lead.comment && (
-                          <div className="text-small text-light-textSecondary dark:text-dark-textSecondary mb-2 line-clamp-2">
+                          <div className="text-sm text-light-textSecondary dark:text-dark-textSecondary mb-2 line-clamp-2">
                             {lead.comment}
                           </div>
                         )}
@@ -599,15 +594,15 @@ export default function MarketPage() {
                         {/* Теги */}
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {lead.region && (
-                            <span className="text-small px-2 py-0.5 rounded bg-light-bg dark:bg-dark-bg text-light-textSecondary dark:text-dark-textSecondary">
-                              📍 {lead.region}
+                            <span className="text-xs px-2 py-1 rounded-lg bg-light-bg dark:bg-dark-bg text-light-textSecondary dark:text-dark-textSecondary">
+                              {lead.region}
                             </span>
                           )}
-                          {(lead.subcategory || lead.niche) && (lead.subcategory || lead.niche) !== "Окна" && (
-                            <span className="text-small px-2 py-0.5 rounded bg-light-bg dark:bg-dark-bg text-light-textSecondary dark:text-dark-textSecondary">
-                              🪟 {(() => {
+                          {(lead.subcategory || lead.niche) && (
+                            <span className="text-xs px-2 py-1 rounded-lg bg-light-bg dark:bg-dark-bg text-light-textSecondary dark:text-dark-textSecondary">
+                              {(() => {
                                 const text = (lead.subcategory || lead.niche?.replace("Окна: ", "") || "");
-                                return text.length > 20 ? text.substring(0, 20) + "..." : text;
+                                return text.length > 25 ? text.substring(0, 25) + "..." : text;
                               })()}
                             </span>
                           )}
@@ -615,32 +610,32 @@ export default function MarketPage() {
                         
                         {/* Статус */}
                         <div className="flex items-center gap-2">
-                          <div className={`inline-flex items-center gap-1.5 text-small px-2 py-1 rounded-full border ${getPurchaseBadgeStyles(lead.purchaseCount, lead.isUnique)}`}>
-                            {lead.isUnique ? (
-                              <>
-                                <span className="w-2 h-2 rounded-full bg-green-500" />
-                                Уникальный
-                              </>
-                            ) : (
-                              <>
-                                <span className={`w-2 h-2 rounded-full ${lead.purchaseCount === 1 ? 'bg-yellow-500' : 'bg-orange-500'}`} />
-                                {lead.purchaseStatus}
-                              </>
-                            )}
+                          <div className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${getPurchaseBadgeStyles(lead.purchaseCount, lead.isUnique)}`}>
+                          {lead.isUnique ? (
+                            <>
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              Уникальный
+                            </>
+                          ) : (
+                            <>
+                                <span className={`w-1.5 h-1.5 rounded-full ${lead.purchaseCount === 1 ? 'bg-yellow-500' : 'bg-orange-500'}`} />
+                              {lead.purchaseStatus}
+                            </>
+                          )}
                           </div>
-                          <span className="text-small text-light-textSecondary dark:text-dark-textSecondary">
+                          <span className="text-xs text-light-textSecondary dark:text-dark-textSecondary">
                             {new Date(lead.createdAt).toLocaleDateString('ru-RU')}
                           </span>
                         </div>
                       </div>
                       
                       {/* Цена и покупка */}
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-2 shrink-0">
                         <div className="text-right">
-                          <div className="text-h3 font-bold text-light-accent dark:text-dark-accent">
-                            {formatPrice(lead.price)}
+                          <div className="text-lg font-bold text-light-accent dark:text-dark-accent">
+                            {formatPrice(lead.price)} LC
                           </div>
-                          <div className="text-small text-light-textSecondary dark:text-dark-textSecondary">
+                          <div className="text-xs text-light-textSecondary dark:text-dark-textSecondary">
                             ≈ {Math.round(lead.price * 100)} ₽
                           </div>
                         </div>
@@ -649,12 +644,12 @@ export default function MarketPage() {
                           variant="primary"
                           onClick={() => handleBuyLead(lead.id, lead.price)}
                           disabled={buyingLeadId === lead.id || (userData?.balance || 0) < lead.price}
-                          className="min-w-[80px] text-small px-3 py-2"
+                          className="px-4 py-2 text-sm min-w-[80px]"
                         >
                           {buyingLeadId === lead.id ? (
                             <span className="animate-pulse">...</span>
                           ) : (userData?.balance || 0) < lead.price ? (
-                            "Мало"
+                            "Мало LC"
                           ) : (
                             "Купить"
                           )}
