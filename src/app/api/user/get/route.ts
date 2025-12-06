@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
           telegramId: telegramId,
           username: username || null,
           fullName: fullName || null,
-          balance: 1000, // Начальный баланс для новых пользователей
+          balance: 5, // Начальный баланс 5 LC для новых пользователей
         },
       });
     } else {

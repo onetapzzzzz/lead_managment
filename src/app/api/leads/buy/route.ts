@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       user = await prisma.user.create({
         data: {
           telegramId: data.userId || "demo_user",
-          balance: 0, // Начальный баланс 0 — поинты только за лиды
+          balance: 5, // Начальный баланс 5 LC
         },
       });
     }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!currentUser || currentUser.balance < price) {
-        throw new Error(`Недостаточно поинтов. Нужно: ${price}, у вас: ${currentUser?.balance || 0}`);
+        throw new Error(`Недостаточно LC. Нужно: ${price}, у вас: ${currentUser?.balance || 0}`);
       }
 
       // Списание у покупателя
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           amount: -price,
           type: "purchase",
           leadId: lead.id,
-          description: `Покупка лида ${lead.phone.slice(-4)} за ${price} поинтов`,
+          description: `Покупка лида ${lead.phone.slice(-4)} за ${price} LC`,
         },
       });
 
