@@ -52,7 +52,7 @@ export function TelegramAuth({ children }: TelegramAuthProps) {
             Открыть в Telegram
           </a>
           <div className="mt-4 text-xs text-light-textSecondary dark:text-dark-textSecondary">
-            Откройте бота и нажмите кнопку "Открыть приложение"
+            Откройте бота и нажмите кнопку «Открыть приложение»
           </div>
         </Card>
       </div>
