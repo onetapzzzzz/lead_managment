@@ -13,12 +13,29 @@ import { formatPrice } from "@/lib/leadPricing";
 import { 
   CATEGORIES, 
   REGIONS, 
-  REGIONS_WITH_CITIES,
   getCitiesByRegion,
   SORT_OPTIONS,
   UNIQUENESS_OPTIONS,
   CONDITION_OPTIONS
 } from "@/lib/categories";
+
+interface MarketLead {
+  id: string;
+  phone: string;
+  region: string | null;
+  city?: string | null;
+  niche: string | null;
+  subcategory?: string;
+  comment: string | null;
+  price: number;
+  priceRub?: number;
+  purchaseCount: number;
+  purchaseStatus: string;
+  isUnique: boolean;
+  remaining: number;
+  condition?: string;
+  createdAt: string;
+}
 
 export default function MarketPage() {
   const router = useRouter();
@@ -47,7 +64,7 @@ export default function MarketPage() {
   // Поиск региона/города
   const [regionSearch, setRegionSearch] = useState<string>("");
 
-  const leads = marketData?.leads || [];
+  const leads = (marketData?.leads || []) as MarketLead[];
   
   // Фильтрация регионов
   const filteredRegions = useMemo(() => {
@@ -69,10 +86,10 @@ export default function MarketPage() {
 
   // Фильтрация лидов на клиенте
   const filteredLeads = useMemo(() => {
-    let result = leads;
+    let result: MarketLead[] = [...leads];
     
     if (subcategoryFilter) {
-      result = result.filter(l => l.subcategory === subcategoryFilter || l.niche?.includes(subcategoryFilter));
+      result = result.filter(l => (l.subcategory || "") === subcategoryFilter || l.niche?.includes(subcategoryFilter));
     }
     
     if (regionFilter) {
@@ -80,7 +97,7 @@ export default function MarketPage() {
     }
     
     if (cityFilter) {
-      result = result.filter(l => (l as any).city === cityFilter);
+      result = result.filter(l => l.city === cityFilter);
     }
     
     if (priceFromFilter) {
@@ -121,13 +138,13 @@ export default function MarketPage() {
     // Сортировка
     switch (sortBy) {
       case "newest":
-        result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
       case "price_high":
-        result = [...result].sort((a, b) => b.price - a.price);
+        result.sort((a, b) => b.price - a.price);
         break;
       case "price_low":
-        result = [...result].sort((a, b) => a.price - b.price);
+        result.sort((a, b) => a.price - b.price);
         break;
       case "bought_1":
         result = result.filter(l => l.purchaseCount === 1);
@@ -575,9 +592,12 @@ export default function MarketPage() {
                               📍 {lead.region}
                             </span>
                           )}
-                          {lead.subcategory && lead.subcategory !== "Окна" && (
+                          {(lead.subcategory || lead.niche) && (lead.subcategory || lead.niche) !== "Окна" && (
                             <span className="text-small px-2 py-0.5 rounded bg-light-bg dark:bg-dark-bg text-light-textSecondary dark:text-dark-textSecondary">
-                              🪟 {lead.subcategory.length > 20 ? lead.subcategory.substring(0, 20) + "..." : lead.subcategory}
+                              🪟 {(() => {
+                                const text = (lead.subcategory || lead.niche?.replace("Окна: ", "") || "");
+                                return text.length > 20 ? text.substring(0, 20) + "..." : text;
+                              })()}
                             </span>
                           )}
                         </div>
